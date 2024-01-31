@@ -382,7 +382,12 @@ class TacoPromptHidden(BaseModel):
 
         self.options = options
         self.desc = [node.description for node_id, node in self.id2taxon.items()]
-        self.device = "cuda"
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
 
         self._init_idx_map()
 

@@ -61,7 +61,19 @@ def rearrange(energy_scores, candidate_position_idx, true_position_idx):
 class Tester:
     def __init__(self, model, loss, metrics, pre_metric, optimizer, config, data_loader, lr_scheduler=None, hit_metrics=None, recall_metrics=None):
         super(Tester, self).__init__()
-        self.model = model.cuda()
+        if not torch.backends.mps.is_available():
+            if not torch.backends.mps.is_built():
+                print("MPS not available because the current PyTorch install was not "
+                      "built with MPS enabled.")
+            else:
+                print("MPS not available because the current MacOS version is not 12.3+ "
+                      "and/or you do not have an MPS-enabled device on this machine.")
+        if torch.backends.mps.is_available():
+            self.model = model.to(torch.device("mps"))
+        elif torch.cuda.is_available():
+            self.model = model.cuda()
+        else:
+            self.model = model.cpu()
         self.metrics = metrics
         self.hit_metrics = hit_metrics
         self.recall_metrics = recall_metrics

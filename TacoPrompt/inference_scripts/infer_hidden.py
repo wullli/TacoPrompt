@@ -60,13 +60,27 @@ def rearrange(energy_scores, candidate_position_idx, true_position_idx):
 class Tester:
     def __init__(self, model, loss, metrics, pre_metric, optimizer, config, data_loader, lr_scheduler=None, hit_metrics=None, recall_metrics=None):
         super(Tester, self).__init__()
-        self.model = model.cuda()
+        if not torch.backends.mps.is_available():
+            if not torch.backends.mps.is_built():
+                print("MPS not available because the current PyTorch install was not "
+                      "built with MPS enabled.")
+            else:
+                print("MPS not available because the current MacOS version is not 12.3+ "
+                      "and/or you do not have an MPS-enabled device on this machine.")
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+            self.model = model.to(torch.device("mps"))
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+            self.model = model.cuda()
+        else:
+            self.device = torch.device("cpu")
+            self.model = model.cpu()
         self.metrics = metrics
         self.hit_metrics = hit_metrics
         self.recall_metrics = recall_metrics
         self.pre_metric = pre_metric
         self.test_batch_size = config['trainer']['test_batch_size']
-        self.device = torch.device('cuda' if config["n_gpu"] > 0 else 'cpu')
 
         self.config = config
         self.train_data_loader = None
@@ -152,41 +166,56 @@ class Tester:
                     num+=1
             print(num)
 
-            for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
-                batched_energy_scores = []
-                query_id = taxon2all_node_id[query]
-                for edges in mit.sliced(candidate_positions, batch_size):
-                    edges = list(edges)
-                    ps, cs = zip(*edges)
+            with open("./predicted_positions", "w") as fout:
+                fout.write(f"Query\tPredicted positions\n")
+                for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
+                    batched_energy_scores = []
+                    query_id = taxon2all_node_id[query]
+                    for edges in mit.sliced(candidate_positions, batch_size):
+                        edges = list(edges)
+                        ps, cs = zip(*edges)
 
-                    with autocast():
-                        p_idx = torch.tensor([taxon2allemb_id[n] for n in ps]).to(self.device)
-                        c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
-                        q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
-                        pseudo_pct = torch.tensor([1 for j in range(p_idx.shape[0])])
-                        scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
-                        scores = scores[:, 0]
-                    batched_energy_scores.append(scores)
-                batched_energy_scores_cat = torch.cat(batched_energy_scores)
-                
-                # Total
-                batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
-                                                              node2pos[query])
-                ranks = self.pre_metric(batched_energy_scores_cat, labels)
-                all_ranks.extend(ranks)
+                        with autocast():
+                            p_idx = torch.tensor([taxon2allemb_id[n] for n in ps]).to(self.device)
+                            c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
+                            q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
+                            pseudo_pct = torch.tensor([1 for j in range(p_idx.shape[0])])
+                            scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
+                            scores = scores[:, 0]
+                        batched_energy_scores.append(scores)
+                    batched_energy_scores_cat = torch.cat(batched_energy_scores)
 
-                if query in leaf_queries:
-                    leaf_ranks.extend(ranks)
-                else:
-                    nonleaf_ranks.extend(ranks)
+                    # Total
+                    batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
+                                                                  node2pos[query])
 
-            print(all_ranks)
-            total_metrics = [metric(all_ranks) for metric in self.metrics]
-            leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
-            nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
+                    predicted_scores = batched_energy_scores_cat.cpu().squeeze_().tolist()
+                    if config['loss'].startswith("info_nce") or config['loss'].startswith(
+                            "bce_loss"):  # select top-5 predicted parents
+                        predict_candidate_positions = [candidate_positions[ele[0]] for ele in
+                                                       sorted(enumerate(predicted_scores), key=lambda x: -x[1])[:1]]
+                    else:
+                        predict_candidate_positions = [candidate_positions[ele[0]] for ele in
+                                                       sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
+                    predict_parents = "\t".join(
+                        [f'({id2taxon[u]}, {id2taxon[v]})' for (u, v) in predict_candidate_positions])
+                    fout.write(f"{query}\t{predict_parents}\n")
 
-            print(f'leaf_metrics:{leaf_metrics}')
-            print(f'nonleaf_metrics:{nonleaf_metrics}')
+                    ranks = self.pre_metric(batched_energy_scores_cat, labels)
+                    all_ranks.extend(ranks)
+
+                    if query in leaf_queries:
+                        leaf_ranks.extend(ranks)
+                    else:
+                        nonleaf_ranks.extend(ranks)
+
+                print(all_ranks)
+                total_metrics = [metric(all_ranks) for metric in self.metrics]
+                leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
+                nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
+
+                print(f'leaf_metrics:{leaf_metrics}')
+                print(f'nonleaf_metrics:{nonleaf_metrics}')
         return total_metrics, leaf_metrics, nonleaf_metrics
 
     
@@ -269,7 +298,7 @@ if __name__ == '__main__':
 
     model_path = args.model_path
     assert model_path != None,"Please enter model path!"
-    model = load_model(model_path,config=config,test_dataset=test_data_loader.dataset)
+    model = load_model(model_path, config=config, test_dataset=test_data_loader.dataset)
 
     test_bs = config["trainer"]["test_batch_size"]
     tester = Tester(model, loss, metrics, pre_metric, optimizer=None, config=config, data_loader=test_data_loader, lr_scheduler=None,hit_metrics=hit_metrics,recall_metrics=recll_metrics)
