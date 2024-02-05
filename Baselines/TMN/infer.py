@@ -149,7 +149,7 @@ if __name__ == '__main__':
     args.add_argument('-t', '--taxon', default=None, type=str, help='path to new taxon list  (default: None)')
     args.add_argument('-d', '--device', default=None, type=str, help='indices of GPUs to enable (default: all)')
     # args.add_argument('-k', '--topk', default=-1, type=int, help='topk retrieved instances for testing, -1 means no retrieval stage (default: -1)')
-    args.add_argument('-m', '--topm', default=10, type=int, help='save topm ranked positions (default: 10)')
+    args.add_argument('-m', '--topm', default=1, type=int, help='save topm ranked positions (default: 10)')
     args.add_argument('-b', '--batch_size', default=-1, type=int, help='batch size, -1 for small dataset (default: -1), 20000 for larger MAG-Full data')
     args.add_argument('-s', '--save', default="./output/prediction_results.tsv", type=str, help='save file for prediction results (default: ./output/prediction_results.tsv)')
     args_outer = args.parse_args()
