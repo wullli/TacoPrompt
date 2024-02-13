@@ -166,7 +166,8 @@ class Tester:
                     num+=1
             print(num)
 
-            with open("./predicted_positions", "w") as fout:
+            save_dir = Path(self.config['trainer']['save_dir'])
+            with open(save_dir / "predicted_positions.tsv", "w") as fout:
                 fout.write(f"Query\tPredicted positions\n")
                 for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
                     batched_energy_scores = []
@@ -198,8 +199,8 @@ class Tester:
                         predict_candidate_positions = [candidate_positions[ele[0]] for ele in
                                                        sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
                     predict_parents = "\t".join(
-                        [f'({id2taxon[u]}, {id2taxon[v]})' for (u, v) in predict_candidate_positions])
-                    fout.write(f"{query}\t{predict_parents}\n")
+                        [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
+                    fout.write(f"{query_id}\t{predict_parents}\n")
 
                     ranks = self.pre_metric(batched_energy_scores_cat, labels)
                     all_ranks.extend(ranks)
