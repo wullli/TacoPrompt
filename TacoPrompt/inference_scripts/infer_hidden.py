@@ -71,9 +71,11 @@ class Tester:
             self.device = torch.device("mps")
             self.model = model.to(torch.device("mps"))
         elif torch.cuda.is_available():
+            print("Using CUDA")
             self.device = torch.device("cuda")
             self.model = model.cuda()
         else:
+            print("Using CPU")
             self.device = torch.device("cpu")
             self.model = model.cpu()
         self.metrics = metrics
@@ -98,7 +100,7 @@ class Tester:
         self.valid_candidate_positions = self.candidate_positions
 
     def infer(self):
-        mode = 'test'
+        mode = 'validation'
         logger = logging.getLogger("1")
         total_metrics, leaf_metrics, nonleaf_metrics = self._test(mode)
         for i, mtr in enumerate(self.metrics):
@@ -148,7 +150,8 @@ class Tester:
             leaf_queries = []
             leaf_ranks, nonleaf_ranks = [], []
 
-            eval_queries = queries[:100] if mode == 'validation' else queries
+            #eval_queries = queries[:100] if mode == 'validation' else queries
+            eval_queries = queries
             q_id = torch.tensor([taxon2all_node_id[query] for i, query in enumerate(eval_queries)])
 
             # find leaf and nonleaf
@@ -184,19 +187,19 @@ class Tester:
                             scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
                             scores = scores[:, 0]
                         batched_energy_scores.append(scores)
-                    batched_energy_scores_cat = torch.cat(batched_energy_scores)
+                    batched_energy_scores_cat_raw = torch.cat(batched_energy_scores)
 
                     # Total
-                    batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
+                    batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat_raw, candidate_positions,
                                                                   node2pos[query])
 
-                    predicted_scores = batched_energy_scores_cat.cpu().squeeze_().tolist()
+                    predicted_scores = batched_energy_scores_cat_raw.cpu().squeeze_().tolist()
                     if config['loss'].startswith("info_nce") or config['loss'].startswith(
                             "bce_loss"):  # select top-5 predicted parents
-                        predict_candidate_positions = [candidate_positions[ele[0]] for ele in
+                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
                                                        sorted(enumerate(predicted_scores), key=lambda x: -x[1])[:1]]
                     else:
-                        predict_candidate_positions = [candidate_positions[ele[0]] for ele in
+                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
                                                        sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
                     predict_parents = "\t".join(
                         [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
