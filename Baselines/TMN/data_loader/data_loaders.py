@@ -1,8 +1,11 @@
+import glob
+from pathlib import Path
+
 from torch.utils.data import DataLoader
 from .dataset import *
 import dgl
 import torch
-from itertools import chain 
+from itertools import chain
 
 BATCH_GRAPH_NODE_LIMIT = 100000
 
@@ -22,25 +25,30 @@ class UnifiedDataLoader(DataLoader):
         self.normalize_embed = normalize_embed
         test_flag = 'test' if test else 'train'
 
-        raw_graph_dataset = MAGDataset(name="semeval_food", path=data_path, raw=True,partition_pattern='internal')
+        terms_file = Path(glob.glob(str(Path(data_path) / "*.terms"))[0])
+        name = terms_file.name.split('.')[0]
+
+        raw_graph_dataset = MAGDataset(name=name, path=data_path, raw=True, partition_pattern='internal')
         if 'g' in mode and 'p' in mode:
-            msk_graph_dataset = GraphPathDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode,
+            msk_graph_dataset = GraphPathDataset(raw_graph_dataset, mode=test_flag, sampling_mode=sampling_mode,
                                                  negative_size=negative_size, max_pos_size=max_pos_size,
                                                  expand_factor=expand_factor, cache_refresh_time=cache_refresh_time,
                                                  normalize_embed=normalize_embed, test_topk=test_topk)
         elif 'g' in mode:
-            msk_graph_dataset = GraphDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode,
+            msk_graph_dataset = GraphDataset(raw_graph_dataset, mode=test_flag, sampling_mode=sampling_mode,
                                              negative_size=negative_size,
                                              max_pos_size=max_pos_size, expand_factor=expand_factor,
                                              cache_refresh_time=cache_refresh_time, normalize_embed=normalize_embed,
                                              test_topk=test_topk)
         elif 'p' in mode:
-            msk_graph_dataset = PathDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode, negative_size=negative_size,
+            msk_graph_dataset = PathDataset(raw_graph_dataset, mode=test_flag, sampling_mode=sampling_mode,
+                                            negative_size=negative_size,
                                             max_pos_size=max_pos_size, expand_factor=expand_factor,
                                             cache_refresh_time=cache_refresh_time, normalize_embed=normalize_embed,
                                             test_topk=test_topk)
         else:
-            msk_graph_dataset = RawDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode, negative_size=negative_size,
+            msk_graph_dataset = RawDataset(raw_graph_dataset, mode=test_flag, sampling_mode=sampling_mode,
+                                           negative_size=negative_size,
                                            max_pos_size=max_pos_size, expand_factor=expand_factor,
                                            cache_refresh_time=cache_refresh_time, normalize_embed=normalize_embed,
                                            test_topk=test_topk)
@@ -59,11 +67,11 @@ class UnifiedDataLoader(DataLoader):
             paths_u = [p + [self.dataset.pseudo_leaf_node] * (max_u - len(p)) for p in paths_u]
             paths_v = [p + [self.dataset.pseudo_leaf_node] * (max_v - len(p)) for p in paths_v]
             return torch.tensor(queries), torch.tensor(labels), torch.tensor(us), torch.tensor(vs), \
-                   graphs_u, graphs_v, torch.tensor(paths_u), torch.tensor(paths_v), lens
+                graphs_u, graphs_v, torch.tensor(paths_u), torch.tensor(paths_v), lens
         elif 'g' in self.mode:
             us, vs, graphs_u, graphs_v, queries, labels = map(list, zip(*chain(*samples)))
             return torch.tensor(queries), torch.tensor(labels), torch.tensor(us), torch.tensor(vs), graphs_u, graphs_v, \
-                   None, None, None
+                None, None, None
         elif 'p' in self.mode:
             us, vs, paths_u, paths_v, lens, queries, labels = map(list, zip(*chain(*samples)))
             lens = torch.tensor(lens)
@@ -71,10 +79,11 @@ class UnifiedDataLoader(DataLoader):
             paths_u = [p + [self.dataset.pseudo_leaf_node] * (max_u - len(p)) for p in paths_u]
             paths_v = [p + [self.dataset.pseudo_leaf_node] * (max_v - len(p)) for p in paths_v]
             return torch.tensor(queries), torch.tensor(labels), torch.tensor(us), torch.tensor(vs), None, None, \
-                   torch.tensor(paths_u), torch.tensor(paths_v), lens
+                torch.tensor(paths_u), torch.tensor(paths_v), lens
         else:
             us, vs, queries, labels = map(list, zip(*chain(*samples)))
-            return torch.tensor(queries), torch.tensor(labels), torch.tensor(us), torch.tensor(vs), None, None, None, None, None
+            return torch.tensor(queries), torch.tensor(labels), torch.tensor(us), torch.tensor(
+                vs), None, None, None, None, None
 
     def __str__(self):
         return "\n\t".join([
@@ -104,15 +113,16 @@ class TaxoExpanDataLoader(DataLoader):
 
         raw_graph_dataset = MAGDataset(name="", path=data_path, raw=False)
         msk_graph_dataset = ExpanDataset(raw_graph_dataset, sampling_mode=sampling_mode,
-                                             negative_size=negative_size,
-                                             max_pos_size=max_pos_size, expand_factor=expand_factor,
-                                             cache_refresh_time=cache_refresh_time, normalize_embed=normalize_embed,
-                                             test_topk=test_topk)
+                                         negative_size=negative_size,
+                                         max_pos_size=max_pos_size, expand_factor=expand_factor,
+                                         cache_refresh_time=cache_refresh_time, normalize_embed=normalize_embed,
+                                         test_topk=test_topk)
         self.dataset = msk_graph_dataset
         self.num_workers = num_workers
-        super(TaxoExpanDataLoader, self).__init__(dataset=self.dataset, batch_size=self.batch_size, shuffle=self.shuffle,
-                                                collate_fn=self.collate_fn, num_workers=self.num_workers,
-                                                pin_memory=True)
+        super(TaxoExpanDataLoader, self).__init__(dataset=self.dataset, batch_size=self.batch_size,
+                                                  shuffle=self.shuffle,
+                                                  collate_fn=self.collate_fn, num_workers=self.num_workers,
+                                                  pin_memory=True)
         self.n_samples = len(self.dataset)  # total number of samples that will be emitted by this data loader
 
     def collate_fn(self, samples):

@@ -169,57 +169,57 @@ class Tester:
                     num+=1
             print(num)
 
-            save_dir = Path(self.config['trainer']['save_dir'])
-            with open(save_dir / "predicted_positions.tsv", "w") as fout:
-                fout.write(f"Query\tPredicted positions\n")
-                for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
-                    batched_energy_scores = []
-                    query_id = taxon2all_node_id[query]
-                    for edges in mit.sliced(candidate_positions, batch_size):
-                        edges = list(edges)
-                        ps, cs = zip(*edges)
+        save_dir = Path(self.config.save_dir)
+        with open(save_dir / "predicted_positions.tsv", "w") as fout:
+            fout.write(f"Query\tPredicted positions\n")
+            for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
+                batched_energy_scores = []
+                query_id = taxon2all_node_id[query]
+                for edges in mit.sliced(candidate_positions, batch_size):
+                    edges = list(edges)
+                    ps, cs = zip(*edges)
 
-                        with autocast():
-                            p_idx = torch.tensor([taxon2allemb_id[n] for n in ps]).to(self.device)
-                            c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
-                            q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
-                            pseudo_pct = torch.tensor([1 for j in range(p_idx.shape[0])])
-                            scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
-                            scores = scores[:, 0]
-                        batched_energy_scores.append(scores)
-                    batched_energy_scores_cat_raw = torch.cat(batched_energy_scores)
+                    with autocast():
+                        p_idx = torch.tensor([taxon2allemb_id[n] for n in ps]).to(self.device)
+                        c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
+                        q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
+                        pseudo_pct = torch.tensor([1 for j in range(p_idx.shape[0])])
+                        scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
+                        scores = scores[:, 0]
+                    batched_energy_scores.append(scores)
+                batched_energy_scores_cat_raw = torch.cat(batched_energy_scores)
 
-                    # Total
-                    batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat_raw, candidate_positions,
-                                                                  node2pos[query])
+                # Total
+                batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat_raw, candidate_positions,
+                                                              node2pos[query])
 
-                    predicted_scores = batched_energy_scores_cat_raw.cpu().squeeze_().tolist()
-                    if config['loss'].startswith("info_nce") or config['loss'].startswith(
-                            "bce_loss"):  # select top-5 predicted parents
-                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
-                                                       sorted(enumerate(predicted_scores), key=lambda x: -x[1])[:1]]
-                    else:
-                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
-                                                       sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
-                    predict_parents = "\t".join(
-                        [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
-                    fout.write(f"{query_id}\t{predict_parents}\n")
+                predicted_scores = batched_energy_scores_cat_raw.cpu().squeeze_().tolist()
+                if config['loss'].startswith("info_nce") or config['loss'].startswith(
+                        "bce_loss"):  # select top-5 predicted parents
+                    predict_candidate_positions = [candidate_positions[idx] for idx, score in
+                                                   sorted(enumerate(predicted_scores), key=lambda x: -x[1])[:1]]
+                else:
+                    predict_candidate_positions = [candidate_positions[idx] for idx, score in
+                                                   sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
+                predict_parents = "\t".join(
+                    [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
+                fout.write(f"{query_id}\t{predict_parents}\n")
 
-                    ranks = self.pre_metric(batched_energy_scores_cat, labels)
-                    all_ranks.extend(ranks)
+                ranks = self.pre_metric(batched_energy_scores_cat, labels)
+                all_ranks.extend(ranks)
 
-                    if query in leaf_queries:
-                        leaf_ranks.extend(ranks)
-                    else:
-                        nonleaf_ranks.extend(ranks)
+                if query in leaf_queries:
+                    leaf_ranks.extend(ranks)
+                else:
+                    nonleaf_ranks.extend(ranks)
 
-                print(all_ranks)
-                total_metrics = [metric(all_ranks) for metric in self.metrics]
-                leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
-                nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
+            print(all_ranks)
+            total_metrics = [metric(all_ranks) for metric in self.metrics]
+            leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
+            nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
 
-                print(f'leaf_metrics:{leaf_metrics}')
-                print(f'nonleaf_metrics:{nonleaf_metrics}')
+            print(f'leaf_metrics:{leaf_metrics}')
+            print(f'nonleaf_metrics:{nonleaf_metrics}')
         return total_metrics, leaf_metrics, nonleaf_metrics
 
     
