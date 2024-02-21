@@ -47,7 +47,7 @@ def main(config, args_outer):
         row_sums = nf.sum(axis=1)
         nf = nf / row_sums[:, np.newaxis]
     kv = KeyedVectors(vector_size=nf.shape[1])
-    kv.add(vocab, nf)
+    kv.add_vectors(vocab, nf)
 
     # Load trained model and existing taxonomy
     mode = config['mode']
@@ -123,7 +123,7 @@ def main(config, args_outer):
     save_path.parent.mkdir(parents=True, exist_ok=True)
     with torch.no_grad(), open(args_outer.save, "w") as fout:
         fout.write(f"Query\tPredicted positions\n")
-        for i, query in tqdm(enumerate(vocab)):
+        for i, query in tqdm(enumerate(vocab), desc=f"Predicting and saving at {args_outer.save} ..."):
             batched_energy_scores = []
             nf = torch.tensor(kv[str(query)], dtype=torch.float32).to(device)
             for (ur, vr), n_position in zip(batched_model, batched_positions):
