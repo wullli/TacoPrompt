@@ -79,7 +79,7 @@ class Taxon(object):
             return False
 
     def __hash__(self):
-        return hash(self.display_name)
+        return hash((self.display_name, self.tx_id))
 
 
 class MAGDataset(object):
@@ -174,6 +174,8 @@ class MAGDataset(object):
                         taxon.set_description(desc)
                         tx_id2taxon[segs[0]] = taxon
                         self.taxonomy.add_node(taxon)
+                    else:
+                        raise ValueError(f"Empty line in {node_file_name}")
         # load edges
         with open(edge_file_name, "r") as fin:
             for line in tqdm(fin, desc="Loading relations"):
@@ -339,7 +341,8 @@ class RawDataset(Dataset):
             # add interested node list and subgraph
             # remove supersource nodes (i.e., nodes without in-degree 0)
             # self.node_list = [n for n in train_nodes if n not in roots]
-            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node]
+            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node
+                              and self.core_subgraph.in_degree(n) != 0]
             # getitem的idx找到对应的taxon，使用在all_embed中找对应的结构emb
             self.train_allemb_id2taxon = {idx: taxon for idx, taxon in enumerate(self.core_subgraph.nodes())}
             self.train_taxon2allemb_id = {v: k for k, v in self.train_allemb_id2taxon.items()}

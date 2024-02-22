@@ -72,9 +72,6 @@ class TrainerTEMP(Trainer):
         self.train_data_loader = None
         self.l_p = config['trainer']['lp']
         self.l_c = config['trainer']['lc']
-        self.l_b = config['trainer']['lb']
-        self.l_w = config['trainer']['lw']
-        self.l_angle = config['trainer']['l_angle']
         self.anneal = config['trainer']['anneal']
         self.accumulation_iters = 2
         dataset = self.data_loader.dataset
@@ -116,7 +113,7 @@ class TrainerTEMP(Trainer):
                 ct = ct.to(self.device)
                 bt = bt.to(self.device)
                 wt = wt.to(self.device)
-                loss_label = self.loss[2](score.squeeze(1), pct)
+                loss_label = self.loss(score, pct)
                 loss = loss_label / self.accumulation_iters
 
             scaler.scale(loss).backward()

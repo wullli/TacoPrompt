@@ -1,11 +1,11 @@
 {
-    "exp_name": "bettybossi-tacoprompt",
-    "name": "TacoPromptHidden",
+    "exp_name": "bettybossi-temp",
+    "name": "TEMP",
     "n_gpu": 1,
     "data_path": "data/bettybossi/bettybossi.pickle.bin",
     "arch": {
-        "type": "TacoPromptHidden",
-        "trainer": "TrainerHidden",
+        "type": "TEMPCompletion",
+        "trainer": "TrainerTEMP",
         "args": {
             "dropout": 0.1,
             "plm": "bert-base-uncased"
@@ -34,7 +34,7 @@
             "amsgrad": true
         }
     },
-    "loss": "bce_loss",
+    "loss": "margin_rank_loss",
 
     "hit_metrics": [
         "mrr_scaled_10",
@@ -79,6 +79,8 @@
         "lm": 1.0,
         "lp": 1.0,
         "lc": 1.0,
+        "lb": 0,
+        "lw": 0,
         "anneal": 1,
         "epochs": 100,
         "test_batch_size": 775,

@@ -55,7 +55,7 @@ class Taxon(object):
             return False
 
     def __hash__(self):
-        return hash(self.display_name)
+        return hash((self.display_name, self.tx_id))
 
 
 class MAGDataset(object):

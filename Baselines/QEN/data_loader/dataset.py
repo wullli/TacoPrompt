@@ -55,7 +55,7 @@ class Taxon(object):
             return False
 
     def __hash__(self):
-        return hash(self.display_name)
+        return hash((self.display_name, self.tx_id))
 
 
 class MAGDataset(object):
@@ -305,7 +305,8 @@ class RawDataset(Dataset):
             # add interested node list and subgraph
             # remove supersource nodes (i.e., nodes without in-degree 0)
             # self.node_list = [n for n in train_nodes if n not in roots]
-            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node]
+            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node
+                              and self.core_subgraph.in_degree(n) != 0]
 
             # build node2pos, node2edge
             print('building node2pos, node2edge')
@@ -372,12 +373,6 @@ class RawDataset(Dataset):
             print(len(self.core_subgraph.nodes))
             print(len(self.core_subgraph.edges))
             print(len(self.all_edges))
-            print((self.id2taxon[1066], self.id2taxon[8838]) in self.all_edges)
-            for node, pos in self.test_node2pos.items():
-                if (self.id2taxon[1066], self.id2taxon[8838]) in pos:
-                    print(self.taxon2id[node])
-                    print([(self.taxon2id[po[0]],self.taxon2id[po[1]]) for po in pos])
-            exit()
         end = time.time()
         print(f"Finish loading dataset ({end - start} seconds)")
 

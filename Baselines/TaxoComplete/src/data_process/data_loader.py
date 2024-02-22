@@ -50,7 +50,7 @@ class TaxoDataset(object):
 
     def _load_dataset_raw(self, dir_path):
         node_file_name = os.path.join(dir_path, f"{self.name}.terms")
-        def_file_name = os.path.join(dir_path, "term2def.csv")
+        def_file_name = os.path.join(dir_path, f"{self.name}.desc")
         edge_file_name = os.path.join(dir_path, f"{self.name}.taxo")
         output_pickle_file_name = os.path.join(dir_path, f"{self.name}"+date_time+".pickle.bin")
 
@@ -81,7 +81,7 @@ class TaxoDataset(object):
                     child_taxon = tx_id2incrmt[segs[1]]
                     tax_pairs.append((parent_taxon,child_taxon))
         # print(len(tax_pairs))
-        term2def = pd.read_csv(def_file_name)
+        term2def = pd.read_csv(def_file_name, sep="\t", header=None, names=["label", "summary"])
         term2def = term2def.replace({"label": tx_id2incrmt})[['label','summary']]
         term2def.set_index('label')
         self.term2def = term2def.to_dict(orient='index')

@@ -201,74 +201,88 @@ class Tester:
             # print(temp)
             # exit(0)
 
-            for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
-                batched_energy_scores = []
-                query_index = torch.tensor(taxon2id[query]).to(self.device)
-                query_code = torch.index_select(codes, 0, query_index)  # 1 * m * dim
+            with torch.no_grad(), open(args.save_dir, "w") as fout:
+                fout.write(f"Query\tPredicted positions\n")
+                for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
+                    batched_energy_scores = []
+                    query_index = torch.tensor(taxon2id[query]).to(self.device)
+                    query_code = torch.index_select(codes, 0, query_index)  # 1 * m * dim
 
-                descs = [id2taxon[i].description + id2taxon[i].description for i in node_idx]
-                descs = self.data_loader.tokenizer(descs, return_tensors='pt', padding=True)
-                descs = {k: v.to(self.device) for k, v in descs.items()}
-                temp = model.poly_encoder(descs, debug=debug)
-                temp += 1
+                    descs = [id2taxon[i].description + id2taxon[i].description for i in node_idx]
+                    descs = self.data_loader.tokenizer(descs, return_tensors='pt', padding=True)
+                    descs = {k: v.to(self.device) for k, v in descs.items()}
+                    temp = model.poly_encoder(descs, debug=debug)
+                    temp += 1
 
-                # find best/worst siblings in seed taxonomy
-                s = time.time()
-                best_worsts = {
-                    k: [taxon2id[n] for n in dataset.get_best_worst_siblings(k, query, graph, train=False)] for k in
-                    dataset.core_subgraph.nodes()}  # taxon: best and worst's ids
-                best_worst_time = time.time() - s
+                    # find best/worst siblings in seed taxonomy
+                    s = time.time()
+                    best_worsts = {
+                        k: [taxon2id[n] for n in dataset.get_best_worst_siblings(k, query, graph, train=False)] for k in
+                        dataset.core_subgraph.nodes()}  # taxon: best and worst's ids
+                    best_worst_time = time.time() - s
 
-                # compute
-                s = time.time()
-                for edges in mit.sliced(candidate_positions, batch_size):
-                    edges = list(edges)
-                    ps, cs = zip(*edges)
+                    # compute
+                    s = time.time()
+                    for edges in mit.sliced(candidate_positions, batch_size):
+                        edges = list(edges)
+                        ps, cs = zip(*edges)
 
-                    with autocast():
-                        p_idx = torch.tensor([taxon2id[n] for n in ps]).to(self.device)
-                        c_idx = torch.tensor([taxon2id[n] for n in cs]).to(self.device)
-                        b_idx = torch.tensor([best_worsts[p][0] for p in ps]).to(self.device)
-                        w_idx = torch.tensor([best_worsts[p][1] for p in ps]).to(self.device)
+                        with autocast():
+                            p_idx = torch.tensor([taxon2id[n] for n in ps]).to(self.device)
+                            c_idx = torch.tensor([taxon2id[n] for n in cs]).to(self.device)
+                            b_idx = torch.tensor([best_worsts[p][0] for p in ps]).to(self.device)
+                            w_idx = torch.tensor([best_worsts[p][1] for p in ps]).to(self.device)
 
-                        pe, ce, be, we = map(lambda x: torch.logical_and(x != pseudo_leaf_id, x != pseudo_root_id),
-                                             [p_idx, c_idx, b_idx, w_idx])
-                        pt, ct, bt, wt = map(lambda x: torch.index_select(input=codes, dim=0, index=x),
-                                             [p_idx, c_idx, b_idx, w_idx])
-                        # if debug:
-                        #     print(f'widx: {w_idx}')
-                        #     print(pt, wt)
-                        qt = query_code.expand(pt.shape[0], -1, -1)
+                            pe, ce, be, we = map(lambda x: torch.logical_and(x != pseudo_leaf_id, x != pseudo_root_id),
+                                                 [p_idx, c_idx, b_idx, w_idx])
+                            pt, ct, bt, wt = map(lambda x: torch.index_select(input=codes, dim=0, index=x),
+                                                 [p_idx, c_idx, b_idx, w_idx])
+                            # if debug:
+                            #     print(f'widx: {w_idx}')
+                            #     print(pt, wt)
+                            qt = query_code.expand(pt.shape[0], -1, -1)
 
-                        scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
-                    if debug:
-                        print(scores.shape)
-                        print(scores.squeeze())
-                    debug = False
-                    batched_energy_scores.append(scores)
-                batched_energy_scores_cat = torch.cat(batched_energy_scores)
-                calc_time = time.time() - s
+                            scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
+                        if debug:
+                            print(scores.shape)
+                            print(scores.squeeze())
+                        debug = False
+                        batched_energy_scores.append(scores)
+                    batched_energy_scores_cat = torch.cat(batched_energy_scores)
+                    calc_time = time.time() - s
 
-                # Total
-                batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
-                                                              node2pos[query])
-                ranks = self.pre_metric(batched_energy_scores_cat, labels)
-                all_ranks.extend(ranks)
+                    predicted_scores = batched_energy_scores.cpu().squeeze_().tolist()
+                    if config['loss'].startswith("info_nce") or config['loss'].startswith(
+                            "bce_loss"):  # select top-5 predicted parents
+                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
+                                                       sorted(enumerate(predicted_scores), key=lambda x: -x[1])[:1]]
+                    else:
+                        predict_candidate_positions = [candidate_positions[idx] for idx, score in
+                                                       sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
+                    predict_parents = "\t".join(
+                        [f'({u.display_name}, {v.display_name})' for (u, v) in predict_candidate_positions])
+                    fout.write(f"{query}\t{predict_parents}\n")
 
-                if query in leaf_queries:
-                    leaf_ranks.extend(ranks)
-                else:
-                    nonleaf_ranks.extend(ranks)
+                    # Total
+                    batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
+                                                                  node2pos[query])
+                    ranks = self.pre_metric(batched_energy_scores_cat, labels)
+                    all_ranks.extend(ranks)
 
-            print(best_worst_time / calc_time)
+                    if query in leaf_queries:
+                        leaf_ranks.extend(ranks)
+                    else:
+                        nonleaf_ranks.extend(ranks)
 
-            print(all_ranks)
-            total_metrics = [metric(all_ranks) for metric in self.metrics]
-            leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
-            nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
+                print(best_worst_time / calc_time)
 
-            print(f'leaf_metrics:{leaf_metrics}')
-            print(f'nonleaf_metrics:{nonleaf_metrics}')
+                print(all_ranks)
+                total_metrics = [metric(all_ranks) for metric in self.metrics]
+                leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
+                nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
+
+                print(f'leaf_metrics:{leaf_metrics}')
+                print(f'nonleaf_metrics:{nonleaf_metrics}')
         return total_metrics, leaf_metrics, nonleaf_metrics
 
         

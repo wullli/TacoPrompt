@@ -2,7 +2,7 @@
     "exp_name": "BettyBossi-QEN-",
     "name": "QENModel",
     "n_gpu": 1,
-    "data_path": "data/bettybossi/bettybossi.pickle.bin",
+    "data_path": "data/bettybossi/",
     "arch": {
         "type": "QENModel",
         "trainer": "TrainerTC",

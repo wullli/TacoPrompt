@@ -120,6 +120,7 @@ class Tester:
             model = model.module
 
         batch_size = self.test_batch_size
+        print("Test batch size: ", batch_size)
 
         model.eval()
         with torch.no_grad():
@@ -138,6 +139,8 @@ class Tester:
                 candidate_positions = self.valid_candidate_positions
                 taxon2id = dataset.valid_taxon2id
                 id2taxon = dataset.valid_id2taxon
+
+            print("Number candidate positions: ", len(candidate_positions))
             taxon2id.keys()
             pseudo_leaf_id = taxon2id[dataset.pseudo_leaf_node]
             pseudo_root_id = taxon2id[dataset.pseudo_root_node]
@@ -175,11 +178,13 @@ class Tester:
             for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
                 batched_energy_scores = []
                 query_id = taxon2all_node_id[query]
+                infer_count = 0
                 for edges in mit.sliced(candidate_positions, batch_size):
+                    infer_count += 1
                     edges = list(edges)
                     ps, cs = zip(*edges)
 
-                    with autocast():
+                    with autocast(), torch.no_grad():
                         p_idx = torch.tensor([taxon2allemb_id[n] for n in ps]).to(self.device)
                         c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
                         q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
@@ -187,13 +192,14 @@ class Tester:
                         scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
                         scores = scores[:, 0]
                     batched_energy_scores.append(scores)
-                batched_energy_scores_cat_raw = torch.cat(batched_energy_scores)
+                batched_energy_scores_cat = torch.cat(batched_energy_scores)
+                del batched_energy_scores
+                predicted_scores = batched_energy_scores_cat.cpu().squeeze_().tolist()
 
                 # Total
-                batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat_raw, candidate_positions,
+                batched_energy_scores_cat, labels = rearrange(batched_energy_scores_cat, candidate_positions,
                                                               node2pos[query])
 
-                predicted_scores = batched_energy_scores_cat_raw.cpu().squeeze_().tolist()
                 if config['loss'].startswith("info_nce") or config['loss'].startswith(
                         "bce_loss"):  # select top-5 predicted parents
                     predict_candidate_positions = [candidate_positions[idx] for idx, score in
@@ -213,7 +219,6 @@ class Tester:
                 else:
                     nonleaf_ranks.extend(ranks)
 
-            print(all_ranks)
             total_metrics = [metric(all_ranks) for metric in self.metrics]
             leaf_metrics = [metric(leaf_ranks) for metric in self.metrics]
             nonleaf_metrics = [metric(nonleaf_ranks) for metric in self.metrics]
