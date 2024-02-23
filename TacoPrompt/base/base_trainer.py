@@ -77,7 +77,7 @@ class BaseTrainer:
         pass
 
     def test(self):
-        test_values, leaf_values, nonleaf_values = self._test('test')
+        test_values, leaf_values, nonleaf_values = self._test('validation')
         # test_values = self._test('test')
         for i, mtr in enumerate(self.metrics):
             self.logger.info('    {:15s}: {:.3f}'.format('test_' + mtr.__name__, test_values[i]))
@@ -94,6 +94,9 @@ class BaseTrainer:
         """
         Full training logic
         """
+        best_state = None
+        best_saved = None
+        epoch = 0
         self._save_checkpoint(0, save_best=False)
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
@@ -122,31 +125,30 @@ class BaseTrainer:
             best = False
             if self.mnt_mode != 'off':
                 # HERE!!!!!!!!!!!!!!!!!!xu: 特定回合后再进行monitor
-                if self.mnt_metric not in log:
-                    continue
-                try:
-                    # check whether model performance improved or not, according to specified metric(mnt_metric)
-                    improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
-                               (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
-                except KeyError:
-                    self.logger.warning("Warning: Metric '{}' is not found. "
-                                        "Model performance monitoring is disabled.".format(self.mnt_metric))
-                    self.mnt_mode = 'off'
-                    improved = False
-                    not_improved_count = 0
+                if self.mnt_metric in log:
+                    try:
+                        # check whether model performance improved or not, according to specified metric(mnt_metric)
+                        improved = (self.mnt_mode == 'min' and log[self.mnt_metric] <= self.mnt_best) or \
+                                   (self.mnt_mode == 'max' and log[self.mnt_metric] >= self.mnt_best)
+                    except KeyError:
+                        self.logger.warning("Warning: Metric '{}' is not found. "
+                                            "Model performance monitoring is disabled.".format(self.mnt_metric))
+                        self.mnt_mode = 'off'
+                        improved = False
+                        not_improved_count = 0
 
-                if improved:
-                    self.mnt_best = log[self.mnt_metric]
-                    not_improved_count = 0
-                    best = True
-                else:
-                    not_improved_count += 1
+                    if improved:
+                        self.mnt_best = log[self.mnt_metric]
+                        not_improved_count = 0
+                        best = True
+                    else:
+                        not_improved_count += 1
 
-                if not_improved_count > self.early_stop:
-                    self.logger.info("Validation performance didn\'t improve for {} epochs. "
-                                     "Training stops.".format(self.early_stop))
+                    if not_improved_count > self.early_stop:
+                        self.logger.info("Validation performance didn\'t improve for {} epochs. "
+                                         "Training stops.".format(self.early_stop))
 
-                    break
+                        break
 
             if epoch % self.save_period == 0 or best:
                 save_path = self._save_checkpoint(epoch, save_best=best)
@@ -154,6 +156,10 @@ class BaseTrainer:
                     best_state = copy.deepcopy(self.model.state_dict())
                     best_saved = save_path
 
+        if best_state is None:
+            best_state = copy.deepcopy(self.model.state_dict())
+            save_path = self._save_checkpoint(epoch, save_best=True)
+            best_saved = save_path
         self.logger.info("Testing with best model...")
         self.model.load_state_dict(best_state)
         evaluations = self.test()

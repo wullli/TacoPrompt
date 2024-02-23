@@ -43,19 +43,24 @@ class Taxon(object):
         return "Taxon {} (name: {}, level: {})".format(self.tx_id, self.norm_name, self.level)
 
     def __lt__(self, other):
-        if self.display_name < other.display_name:
+        compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
+        compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
+        if compare_val_self < compare_val_other:
             return True
         else:
             return False
 
     def __eq__(self, other):
-        if self.display_name == other.display_name:
+        compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
+        compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
+        if compare_val_self == compare_val_other:
             return True
         else:
             return False
 
     def __hash__(self):
-        return hash((self.display_name, self.tx_id))
+        hash_val = self.tx_id if self.tx_id != "" else self.display_name
+        return hash(hash_val)
 
 
 class MAGDataset(object):

@@ -67,19 +67,24 @@ class Taxon(object):
         return "Taxon {} (name: {}, level: {})".format(self.tx_id, self.norm_name, self.level)
 
     def __lt__(self, other):
-        if self.display_name < other.display_name:
+        compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
+        compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
+        if compare_val_self < compare_val_other:
             return True
         else:
             return False
 
     def __eq__(self, other):
-        if self.display_name == other.display_name:
+        compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
+        compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
+        if compare_val_self == compare_val_other:
             return True
         else:
             return False
 
     def __hash__(self):
-        return hash((self.display_name, self.tx_id))
+        hash_val = self.tx_id if self.tx_id != "" else self.display_name
+        return hash(hash_val)
 
 
 class MAGDataset(object):
@@ -341,8 +346,7 @@ class RawDataset(Dataset):
             # add interested node list and subgraph
             # remove supersource nodes (i.e., nodes without in-degree 0)
             # self.node_list = [n for n in train_nodes if n not in roots]
-            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node
-                              and self.core_subgraph.in_degree(n) != 0]
+            self.node_list = [n for n in train_nodes if n != self.pseudo_root_node]
             # getitem的idx找到对应的taxon，使用在all_embed中找对应的结构emb
             self.train_allemb_id2taxon = {idx: taxon for idx, taxon in enumerate(self.core_subgraph.nodes())}
             self.train_taxon2allemb_id = {v: k for k, v in self.train_allemb_id2taxon.items()}
