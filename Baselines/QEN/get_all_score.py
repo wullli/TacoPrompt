@@ -5,6 +5,7 @@ import time
 import warnings
 from functools import partial
 from math import ceil
+from pathlib import Path
 
 import numpy as np
 import json
@@ -107,7 +108,7 @@ class Tester:
     #     # print(self.candidate_position2_posid)
 
     def test_to_get_json(self):
-        for mode in ['test']:
+        for mode in ['validation']:
             logger = logging.getLogger("1")
             total_metrics, leaf_metrics, nonleaf_metrics = self._test(mode)
             for i, mtr in enumerate(self.metrics):
@@ -201,7 +202,7 @@ class Tester:
             # print(temp)
             # exit(0)
 
-            with torch.no_grad(), open(args.save_dir, "w") as fout:
+            with torch.no_grad(), open(Path(config.save_dir) / "predicted_positions.tsv", "w") as fout:
                 fout.write(f"Query\tPredicted positions\n")
                 for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
                     batched_energy_scores = []
@@ -251,7 +252,7 @@ class Tester:
                     batched_energy_scores_cat = torch.cat(batched_energy_scores)
                     calc_time = time.time() - s
 
-                    predicted_scores = batched_energy_scores.cpu().squeeze_().tolist()
+                    predicted_scores = batched_energy_scores_cat.cpu().squeeze_().tolist()
                     if config['loss'].startswith("info_nce") or config['loss'].startswith(
                             "bce_loss"):  # select top-5 predicted parents
                         predict_candidate_positions = [candidate_positions[idx] for idx, score in

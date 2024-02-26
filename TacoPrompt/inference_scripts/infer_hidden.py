@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parents[1])) 
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import argparse
 import collections
@@ -19,6 +20,7 @@ import data_loader.data_loaders as module_data
 import model.loss as module_loss
 import model.metric as module_metric
 import model.model as module_arch
+from model.model import TacoPromptHidden, TEMPCompletion
 import trainer as trainer_arch
 import wandb
 from parse_config import ConfigParser
@@ -189,7 +191,12 @@ class Tester:
                         c_idx = torch.tensor([taxon2allemb_id[n] for n in cs]).to(self.device)
                         q_idx = torch.tensor([q_id[i] for j in range(p_idx.shape[0])])
                         pseudo_pct = torch.tensor([1 for j in range(p_idx.shape[0])])
-                        scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
+                        if isinstance(model, TacoPromptHidden):
+                            scores = model.scorer(p_idx, q_idx, c_idx, pseudo_pct, pseudo_pct, pseudo_pct)
+                        elif isinstance(model, TEMPCompletion):
+                            scores = model.scorer(p_idx, q_idx, c_idx, test=True)
+                        else:
+                            raise ValueError(f"Model type not supported: {model.__class__.__name__}!")
                         scores = scores[:, 0]
                     batched_energy_scores.append(scores)
                 batched_energy_scores_cat = torch.cat(batched_energy_scores)
