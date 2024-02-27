@@ -176,12 +176,12 @@ class MAGDataset(object):
         edge_file_name = os.path.join(dir_path, f"{self.name}.taxo")
         if self.embed_suffix == "":
             # embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.embed")
-            # embedding_file_name = 'data/SemEval-Verb/wordnet_verb.terms.fasttext_mode4.embed'
+            # embedding_file_name = 'data/semeval_verb/wordnet_verb.terms.fasttext_mode4.embed'
             embedding_file_name = glob.glob(os.path.join(dir_path, f"{self.name}*.embed"))[0]
             output_pickle_file_name = os.path.join(dir_path, f"{self.name}.pickle.bin")
         else:
             # embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.{self.embed_suffix}.embed")
-            # embedding_file_name = 'data/SemEval-Verb/wordnet_verb.terms.fasttext_mode4.embed'
+            # embedding_file_name = 'data/semeval_verb/wordnet_verb.terms.fasttext_mode4.embed'
             embedding_file_name = glob.glob(os.path.join(dir_path, f"{self.name}*.embed"))[0]
             output_pickle_file_name = os.path.join(dir_path, f"{self.name}.{self.embed_suffix}.pickle.bin")
         if self.existing_partition:

@@ -1,7 +1,7 @@
 {
     "name": "MatchModel",
     "n_gpu": 1,
-    "data_path": "./data/SemEval-Food",
+    "data_path": "./data/semeval_food",
     "mode": "rps",
     "arch": {
         "type": "MatchModel",

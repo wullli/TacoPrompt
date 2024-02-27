@@ -1,7 +1,7 @@
 {
     "name": "Expan",
     "n_gpu": 1,
-    "data_path": "data/SemEval-Verb",
+    "data_path": "data/semeval_verb",
     "mode": "r",
     "arch": {
         "type": "MatchModel",

@@ -64,15 +64,15 @@ warmup_steps = math.ceil(len(train_dataloader) * epochs * 0.1) #10% of train dat
 train_loss = losses.CosineSimilarityLoss(model)
 evaluator = EmbeddingSimilarityEvaluator.from_input_examples(data_prep.val_examples, name='sts-dev')
 # Tune the model
-# save_path = "data/SemEval-Food/0927_225436"
+# save_path = "data/semeval_food/0927_225436"
 
 
 
 
 # model.fit(train_objectives=[(train_dataloader, train_loss)], evaluator=evaluator, evaluation_steps=warmup_steps, epochs=epochs,
 #           warmup_steps=warmup_steps, output_path=save_path, save_best_model=True)
-# model_path = 'data/SemEval-Food/test_2023_8_26_20_23'
-# model_path = 'data/SemEval-Food/test_2023_8_26_18_54'
+# model_path = 'data/semeval_food/test_2023_8_26_20_23'
+# model_path = 'data/semeval_food/test_2023_8_26_18_54'
 # model.save(model_path)
 # best_score = -100.0  
 # epoch_not_improve = 0
@@ -98,9 +98,9 @@ model.fit(train_objectives=[(train_dataloader, train_loss)], evaluator=evaluator
           warmup_steps=warmup_steps, output_path=str(config.save_dir), save_best_model=True)
 
 model = SentenceTransformer.SentenceTransformer(str(config.save_dir))
-# model = SentenceTransformer.SentenceTransformer('data/SemEval-Food/30-Sep-2023 (22:08:00.090980)')
+# model = SentenceTransformer.SentenceTransformer('data/semeval_food/30-Sep-2023 (22:08:00.090980)')
 # model = SentenceTransformer.SentenceTransformer(data/mesh/29-Sep-2023 (17:34:44.067334)')
-# model = SentenceTransformer.SentenceTransformer('data/SemEval-Verb/29-Sep-2023 (16:32:14.471060)')
+# model = SentenceTransformer.SentenceTransformer('data/semeval_verb/29-Sep-2023 (16:32:14.471060)')
 corpus_embeddings = model.encode(data_prep.corpus, convert_to_tensor=True, show_progress_bar=True)
 preds = propagation(corpus_embeddings,torch.tensor(range(len(nodeIdsCorpus)),device=target_device))
 

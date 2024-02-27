@@ -215,8 +215,8 @@ class Tester:
                     predict_candidate_positions = [candidate_positions[idx] for idx, score in
                                                    sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
                 predict_parents = "\t".join(
-                    [f'({u.display_name}, {v.display_name})' for (u, v) in predict_candidate_positions])
-                fout.write(f"{query}\t{predict_parents}\n")
+                    [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
+                fout.write(f"{query.tx_id}\t{predict_parents}\n")
 
                 ranks = self.pre_metric(batched_energy_scores_cat, labels)
                 all_ranks.extend(ranks)

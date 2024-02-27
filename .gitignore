@@ -102,8 +102,8 @@ ENV/
 
 # input data, saved log, checkpoints
 TacoPrompt/data/mesh/
-TacoPrompt/data/SemEval-Verb/
-TacoPrompt/data/SemEval-Food/
+TacoPrompt/data/semeval_verb/
+TacoPrompt/data/semeval_food/
 input/
 saved/
 datasets/

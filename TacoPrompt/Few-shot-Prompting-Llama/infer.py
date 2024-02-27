@@ -101,8 +101,8 @@ def get_score(q, p, c, examples):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument('-td', '--taxo-file-directory', default="SemEval-Food", type=str,
-                    help='data directory (default: SemEval-Food)')
+    ap.add_argument('-td', '--taxo-file-directory', default="semeval_food", type=str,
+                    help='data directory (default: semeval_food)')
     ap.add_argument('-tn', '--taxo-name', default="semeval_food", type=str,
                     help='taxonomy name (default: semeval_food)')
     ap.add_argument('-tk', '--top-k', default=50, type=int, help='retrieval number (default: 50)')

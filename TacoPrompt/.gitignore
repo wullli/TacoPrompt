@@ -102,8 +102,8 @@ ENV/
 
 # input data, saved log, checkpoints
 data/mesh/
-data/SemEval-Verb/
-data/SemEval-Food/
+data/semeval_verb/
+data/semeval_food/
 input/
 saved/
 datasets/
