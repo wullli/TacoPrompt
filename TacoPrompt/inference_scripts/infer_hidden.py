@@ -176,7 +176,7 @@ class Tester:
 
         save_dir = Path(self.config.save_dir)
         with open(save_dir / "predicted_positions.tsv", "w") as fout:
-            fout.write(f"Query\tPredicted positions\n")
+            fout.write(f"Query\tParent\tChild\n")
             for i, query in tqdm(enumerate(eval_queries), desc=mode, total=len(eval_queries)):
                 batched_energy_scores = []
                 query_id = taxon2all_node_id[query]
@@ -214,9 +214,8 @@ class Tester:
                 else:
                     predict_candidate_positions = [candidate_positions[idx] for idx, score in
                                                    sorted(enumerate(predicted_scores), key=lambda x: x[1])[:1]]
-                predict_parents = "\t".join(
-                    [f'({u.tx_id}, {v.tx_id})' for (u, v) in predict_candidate_positions])
-                fout.write(f"{query.tx_id}\t{predict_parents}\n")
+                p, c = predict_candidate_positions[0]
+                fout.write(f"{query.tx_id}\t{p.display_name}\t{c.display_name}\n")
 
                 ranks = self.pre_metric(batched_energy_scores_cat, labels)
                 all_ranks.extend(ranks)

@@ -1,13 +1,13 @@
 {
-    "batch_size" : 32,
-    "epochs" : 30,
-	"sampling" : "closest",
-    "saving_path" : "./data/saved/semeval_food/results/",
-    "name" : "semeval_food",
-    "data_path" : "./data/semeval_food/",
-    "model_name" : "multi-qa-distilbert-cos-v1",
-    "neg_number" : 20,
-    "partition_pattern":"internal",
-    "alpha":0.1,
-    "seed":47
+  "batch_size": 32,
+  "epochs": 30,
+  "sampling": "closest",
+  "saving_path": "./data/saved/semeval_food/TaxoComplete/",
+  "name": "semeval_food",
+  "data_path": "./data/semeval_food/",
+  "model_name": "multi-qa-distilbert-cos-v1",
+  "neg_number": 20,
+  "partition_pattern": "internal",
+  "alpha": 0.1,
+  "seed": 47
 }

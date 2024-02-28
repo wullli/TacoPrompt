@@ -78,7 +78,7 @@
         "epochs": 100,
         "test_batch_size": 4096,
 
-        "save_dir": "./experiments/semeval_food/",
+        "save_dir": "data/saved/semeval_food/TaxoEnrich",
         "save_period": 20,
         "verbosity": 2,
         

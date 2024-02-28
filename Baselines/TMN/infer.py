@@ -122,7 +122,7 @@ def main(config, args_outer):
     save_path = Path(args_outer.save)
     save_path.parent.mkdir(parents=True, exist_ok=True)
     with torch.no_grad(), open(args_outer.save, "w") as fout:
-        fout.write(f"Query\tPredicted positions\n")
+        fout.write(f"Query\tParent\tChild\n")
         for i, query in tqdm(enumerate(vocab), desc=f"Predicting and saving at {args_outer.save} ..."):
             batched_energy_scores = []
             nf = torch.tensor(kv[str(query)], dtype=torch.float32).to(device)
@@ -138,8 +138,8 @@ def main(config, args_outer):
                 predict_candidate_positions = [candidate_positions[ele[0]] for ele in sorted(enumerate(predicted_scores), key=lambda x:-x[1])[:args_outer.topm]]
             else:
                 predict_candidate_positions = [candidate_positions[ele[0]] for ele in sorted(enumerate(predicted_scores), key=lambda x:x[1])[:args_outer.topm]]
-            predict_parents = "\t".join([f'({indice2word[u]}, {indice2word[v]})' for (u, v) in predict_candidate_positions])
-            fout.write(f"{query}\t{predict_parents}\n")
+            p, c = predict_candidate_positions[0]
+            fout.write(f"{query}\t{indice2word[p]}\t{indice2word[c]}\n")
 
 
 if __name__ == '__main__':
