@@ -141,7 +141,7 @@ def main(args, metrics):
     node_features = graph_dataset.g_full.ndata['x']
     node_features = F.normalize(node_features, p=2, dim=1)
     kv = KeyedVectors(vector_size=node_features.shape[1])
-    kv.add([str(i) for i in range(len(node_features))], node_features.numpy())
+    kv.add_vectors([str(i) for i in range(len(node_features))], node_features.numpy())
 
     all_ranks = []
     for node in tqdm(graph_dataset.test_node_ids):

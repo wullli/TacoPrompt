@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import networkx as nx
 import math
 import argparse
@@ -24,6 +26,9 @@ config = ConfigParser(args)
 args = args.parse_args()
 
 saving_path = config['saving_path']
+save_path = Path(str(saving_path))
+save_path.mkdir(parents=True, exist_ok=True)
+
 name = config['name']
 data_path = config['data_path']
 sampling_method = config['sampling']
@@ -92,7 +97,6 @@ evaluator = EmbeddingSimilarityEvaluator.from_input_examples(data_prep.val_examp
 #     else:
 #         print(f"Epoch {epoch+1}: not improve (score: {score})")
 #         epoch_not_improve += 1
-
 
 model.fit(train_objectives=[(train_dataloader, train_loss)], evaluator=evaluator, evaluation_steps=100, epochs=epochs,
           warmup_steps=warmup_steps, output_path=str(config.save_dir), save_best_model=True)

@@ -47,7 +47,7 @@ def main(config, args_outer):
         row_sums = nf.sum(axis=1)
         nf = nf / row_sums[:, np.newaxis]
     kv = KeyedVectors(vector_size=nf.shape[1])
-    kv.add(vocab, nf)
+    kv.add_vectors(vocab, nf)
 
     # Load trained model and existing taxonomy
     mode = config['mode']

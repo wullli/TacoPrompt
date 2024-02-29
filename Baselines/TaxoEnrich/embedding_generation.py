@@ -1,3 +1,5 @@
+import argparse
+
 import torch
 import networkx as nx
 from tqdm import tqdm
@@ -451,4 +453,6 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument()
     main()

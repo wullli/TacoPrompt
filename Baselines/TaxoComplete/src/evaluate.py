@@ -16,6 +16,7 @@ from model.utils import PPRPowerIteration
 torch.manual_seed(0)
 args = argparse.ArgumentParser(description='Training taxonomy expansion model')
 args.add_argument('-c', '--config', default=None, type=str, help='config file path (default: None)')
+args.add_argument('-m', '--model_path', default=None, type=str, help='model file path (default: None)')
 config = ConfigParser(args)
 args = args.parse_args()
 
@@ -54,8 +55,8 @@ nodes_core_subgraph = list(core_graph.nodes)
 assert nodes_core_subgraph == nodeIdsCorpus
 propagation = PPRPowerIteration(nx.adjacency_matrix(core_graph), alpha=alpha, niter=10).to(target_device)
 
-
-model = SentenceTransformer.SentenceTransformer(config['model_path'])
+model_path = args.model_path if args.model_path else config["model_path"]
+model = SentenceTransformer.SentenceTransformer(model_path)
 corpus_embeddings = model.encode(data_prep.corpus, convert_to_tensor=True, show_progress_bar=True)
 preds = propagation(corpus_embeddings,torch.tensor(range(len(nodeIdsCorpus)),device=target_device))
 
