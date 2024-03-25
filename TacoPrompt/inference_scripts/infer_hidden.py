@@ -102,7 +102,7 @@ class Tester:
         self.valid_candidate_positions = self.candidate_positions
 
     def infer(self):
-        mode = 'validation'
+        mode = 'test'
         logger = logging.getLogger("1")
         total_metrics, leaf_metrics, nonleaf_metrics = self._test(mode)
         for i, mtr in enumerate(self.metrics):

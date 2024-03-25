@@ -108,7 +108,7 @@ class Tester:
     #     # print(self.candidate_position2_posid)
 
     def test_to_get_json(self):
-        for mode in ['validation']:
+        for mode in ['test']:
             logger = logging.getLogger("1")
             total_metrics, leaf_metrics, nonleaf_metrics = self._test(mode)
             for i, mtr in enumerate(self.metrics):
