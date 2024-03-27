@@ -3,7 +3,7 @@
     "epochs" : 5,
 	"sampling" : "closest",
     "saving_path" : "./data/semeval_verb/results/",
-    "name" : "wordnet_verb",
+    "name" : "semeval_verb",
     "data_path" : "./data/semeval_verb/",
     "model_name" : "multi-qa-distilbert-cos-v1",
     "neg_number" : 20,

@@ -145,7 +145,7 @@ class MAGDataset(object):
         if raw:
             self._load_dataset_raw(path)
         else:
-            # path = os.path.join(path,"wordnet_verb.pickle.bin")
+            # path = os.path.join(path,"semeval_verb.pickle.bin")
             self._load_dataset_pickled(path)
 
     def _load_dataset_pickled(self, pickle_path):
@@ -175,12 +175,12 @@ class MAGDataset(object):
         edge_file_name = os.path.join(dir_path, f"{self.name}.taxo")
         if self.embed_suffix == "":
             # embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.embed")
-            # embedding_file_name = 'data/semeval_verb/wordnet_verb.terms.fasttext_mode4.embed'
+            # embedding_file_name = 'data/semeval_verb/semeval_verb.terms.fasttext_mode4.embed'
             embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.name.embed")
             output_pickle_file_name = os.path.join(dir_path, f"{self.name}.pickle.bin")
         else:
             # embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.{self.embed_suffix}.embed")
-            # embedding_file_name = 'data/semeval_verb/wordnet_verb.terms.fasttext_mode4.embed'
+            # embedding_file_name = 'data/semeval_verb/semeval_verb.terms.fasttext_mode4.embed'
             embedding_file_name = os.path.join(dir_path, f"{self.name}.terms.{self.embed_suffix}.name.embed")
             output_pickle_file_name = os.path.join(dir_path, f"{self.name}.{self.embed_suffix}.pickle.bin")
         if self.existing_partition:

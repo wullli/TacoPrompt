@@ -1,7 +1,7 @@
 {
     "name": "MatchModel",
     "n_gpu": 1,
-    "data_path": "data/semeval_verb/wordnet_verb.pickle.bin",
+    "data_path": "data/semeval_verb/semeval_verb.pickle.bin",
     "mode": "g",
     "arch": {
         "type": "MatchModel",

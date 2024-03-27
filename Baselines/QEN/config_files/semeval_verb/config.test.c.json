@@ -2,7 +2,7 @@
     "exp_name": "V-",
     "name": "QENModel",
     "n_gpu": 1,
-    "data_path": "data/semeval_verb/wordnet_verb.pickle.bin",
+    "data_path": "data/semeval_verb/semeval_verb.pickle.bin",
     "arch": {
         "type": "QENModel",
         "trainer": "TrainerTC",
@@ -25,7 +25,7 @@
         "type": "UnifiedDataLoader",
         "args":{
             "tokenizer": "bert-base-uncased",
-            "taxonomy_name": "wordnet_verb",
+            "taxonomy_name": "semeval_verb",
             "sampling_mode": 1,
             "batch_size": 8,
             "negative_size": 15,

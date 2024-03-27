@@ -2,7 +2,7 @@
     "exp_name": "Verb-",
     "name": "TacoPromptHidden",
     "n_gpu": 1,
-    "data_path": "data/semeval_verb/wordnet_verb.pickle.bin",
+    "data_path": "data/semeval_verb/semeval_verb.pickle.bin",
     "arch": {
         "type": "TacoPromptHidden",
         "trainer": "TrainerHidden",
@@ -15,7 +15,7 @@
         "type": "UnifiedDataLoader",
         "args": {
             "tokenizer": "bert-base-uncased",
-            "taxonomy_name": "wordnet_verb",
+            "taxonomy_name": "semeval_verb",
             "sampling_mode": 1,
             "batch_size": 2,
             "negative_size": 15,
@@ -82,7 +82,7 @@
         "anneal": 1,
         "epochs": 100,
         "test_batch_size": 775,
-        "save_dir": "data/saved/wordnet_verb/",
+        "save_dir": "data/saved/semeval_verb/",
         "save_period": 20,
         "verbosity": 2,
         "monitor": "max val_mrr_scaled_10",

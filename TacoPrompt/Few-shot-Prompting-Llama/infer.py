@@ -151,7 +151,7 @@ if __name__ == "__main__":
     for node_id, taxon in node_id2taxon.items():
         if taxo_name == 'semeval_food':
             name = taxon.norm_name.lower()
-        elif taxo_name == 'wordnet_verb':
+        elif taxo_name == 'semeval_verb':
             norm_name = taxon.norm_name
             name = norm_name.split('||')[0]
             name = ' '.join(name.split('_'))

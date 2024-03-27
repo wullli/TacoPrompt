@@ -1,7 +1,7 @@
 {
     "name": "ExpanMatchModelTMN",
     "n_gpu": 1,
-    "data_path": "data/semeval_verb/wordnet_verb.fasttext_mode4.pickle.bin",
+    "data_path": "data/semeval_verb/semeval_verb.fasttext_mode4.pickle.bin",
     "mode": "r",
     "arch": {
         "type": "ExpanMatchModel",

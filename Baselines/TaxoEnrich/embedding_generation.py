@@ -298,7 +298,7 @@ def extract_bert_embedding(sentence, key_words, model, tokenizer, device='cuda:0
 
 
 def main():
-    with open('data/verb/wordnet_verb.pickle.bin', 'rb') as f:
+    with open('data/verb/semeval_verb.pickle.bin', 'rb') as f:
         data = pickle.load(f)
         g_full = data['g_full']
         name = data['name']
@@ -312,7 +312,7 @@ def main():
     taxoord2id = {}
     taxoord2term = {}
     ord = 0
-    with open('data/verb/wordnet_verb.terms', 'r') as f:
+    with open('data/verb/semeval_verb.terms', 'r') as f:
         for lines in f:
             line = lines.strip()
             if line:
@@ -333,7 +333,7 @@ def main():
                 taxoord2term[ord] = taxo_term
                 ord += 1
     taxonomy = nx.DiGraph()
-    with open('data/verb/wordnet_verb.taxo', 'r') as f:
+    with open('data/verb/semeval_verb.taxo', 'r') as f:
         for lines in f:
             line = lines.strip()
             if line:
@@ -417,7 +417,7 @@ def main():
             num += 1
         taxoid2emb[id] = emb
     print(num)
-    with open('data/verb/wordnet_verb.terms.embed', 'w') as f:
+    with open('data/verb/semeval_verb.terms.embed', 'w') as f:
         f.write(f"{len(taxoid2emb)} 768\n")
         for ele in sorted(taxoid2emb.items(), key=lambda x: x[0]):
             embed_string = " ".join([str(a.item()) for a in ele[1]])
@@ -430,23 +430,23 @@ def main():
         # print(emb.shape)
         taxoid2bertemb[node] = emb
 
-    with open('data/verb/wordnet_verb.terms.bertembed', 'w') as f:
+    with open('data/verb/semeval_verb.terms.bertembed', 'w') as f:
         f.write(f"{len(taxoid2bertemb)} 768\n")
         for ele in sorted(taxoid2bertemb.items(), key=lambda x: x[0]):
             embed_string = " ".join([str(a.item()) for a in ele[1]])
             f.write(f"{ele[0]} {embed_string}\n")
 
-    with open('data/verb/wordnet_verb.terms.train', 'w') as f:
+    with open('data/verb/semeval_verb.terms.train', 'w') as f:
         for node in train_node_ids:
             id = taxoord2id[node]
             f.write(f"{id}\t{taxoid2term[id]}\n")
 
-    with open('data/verb/wordnet_verb.terms.validation', 'w') as f:
+    with open('data/verb/semeval_verb.terms.validation', 'w') as f:
         for node in validation_node_ids:
             id = taxoord2id[node]
             f.write(f"{id}\t{taxoid2term[id]}\n")
 
-    with open('data/verb/wordnet_verb.terms.test', 'w') as f:
+    with open('data/verb/semeval_verb.terms.test', 'w') as f:
         for node in test_node_ids:
             id = taxoord2id[node]
             f.write(f"{id}\t{taxoid2term[id]}\n")
