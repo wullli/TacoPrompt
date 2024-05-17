@@ -22,7 +22,8 @@ class UnifiedDataLoader(DataLoader):
         self.normalize_embed = normalize_embed
         test_flag = 'test' if test else 'train'
 
-        raw_graph_dataset = MAGDataset(name="semeval_food", path=data_path, raw=True,partition_pattern='internal')
+        data_name = data_path.split('/')[-1]
+        raw_graph_dataset = MAGDataset(name=data_name, path=data_path, raw=True,partition_pattern='internal')
         if 'g' in mode and 'p' in mode:
             msk_graph_dataset = GraphPathDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode,
                                                  negative_size=negative_size, max_pos_size=max_pos_size,

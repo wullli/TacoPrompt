@@ -56,7 +56,7 @@ class WordWeights(nn.Module):
         token_weights_sum = torch.sum(token_weights, 1)
 
         #Multiply embedding by token weight value
-        token_weights_expanded = token_weights.unsqueeze(-1).expand(token_embeddings.size())
+        token_weights_expanded = token_weights.unsqueeze(-1).complete(token_embeddings.size())
         token_embeddings = token_embeddings * token_weights_expanded
 
         features.update({'token_embeddings': token_embeddings, 'token_weights_sum': token_weights_sum})

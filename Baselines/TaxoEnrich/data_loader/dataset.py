@@ -3,8 +3,8 @@ import networkx as nx
 from networkx.algorithms import descendants, ancestors
 import dgl
 from gensim.models import KeyedVectors
-import numpy as np 
-import torch 
+import numpy as np
+import torch
 from torch.utils.data import Dataset
 import torch.nn.functional as F
 import random
@@ -20,7 +20,6 @@ from functools import partial
 from collections import defaultdict, deque
 import more_itertools as mit
 
-
 MAX_TEST_SIZE = 1000
 MAX_VALIDATION_SIZE = 1000
 
@@ -33,7 +32,7 @@ def add_edge_for_dgl(g, n1, n2):
         g.add_edges(n1, n2)
 
 
-def single_source_shortest_path_length(source,G,cutoff=None):
+def single_source_shortest_path_length(source, G, cutoff=None):
     """Compute the shortest path lengths from source to all reachable nodes.
 
     Parameters
@@ -64,18 +63,18 @@ def single_source_shortest_path_length(source,G,cutoff=None):
     --------
     shortest_path_length
     """
-    seen={}                  # level (number of hops) when seen in BFS
-    level=0                  # the current level
-    nextlevel={source:1}  # dict of nodes to check at next level
+    seen = {}  # level (number of hops) when seen in BFS
+    level = 0  # the current level
+    nextlevel = {source: 1}  # dict of nodes to check at next level
     while nextlevel:
-        thislevel=nextlevel  # advance to next level
-        nextlevel={}         # and start a new list (fringe)
+        thislevel = nextlevel  # advance to next level
+        nextlevel = {}  # and start a new list (fringe)
         for v in thislevel:
             if v not in seen:
-                seen[v]=level # set the level of vertex v
-                nextlevel.update(G[v]) # add neighbors of v
+                seen[v] = level  # set the level of vertex v
+                nextlevel.update(G[v])  # add neighbors of v
         if (cutoff is not None and cutoff <= level):  break
-        level=level+1
+        level = level + 1
     return (source, seen)  # return all path lengths as dictionary
 
 
@@ -93,7 +92,8 @@ def parallel_all_pairs_shortest_path_length(g, node_ids, num_workers=20):
 
 
 class Taxon(object):
-    def __init__(self, tx_id, rank=-1, norm_name="none", display_name="None", main_type="", level="-100", p_count=0, c_count=0, create_date="None"):
+    def __init__(self, tx_id, rank=-1, norm_name="none", display_name="None", main_type="", level="-100", p_count=0,
+                 c_count=0, create_date="None"):
         self.tx_id = tx_id
         self.rank = int(rank)
         self.norm_name = norm_name
@@ -103,18 +103,20 @@ class Taxon(object):
         self.p_count = int(p_count)
         self.c_count = int(c_count)
         self.create_date = create_date
-        
+
     def __str__(self):
         return "Taxon {} (name: {}, level: {})".format(self.tx_id, self.norm_name, self.level)
-        
+
     def __lt__(self, another_taxon):
         if self.level < another_taxon.level:
             return True
         else:
             return self.rank < another_taxon.rank
 
+
 class Pseudo_MAGDataset(object):
-    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=False, partition_pattern='internal', shortest_path=False):
+    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=False, partition_pattern='internal',
+                 shortest_path=False):
         """ Raw dataset class for MAG dataset
 
         Parameters
@@ -215,7 +217,7 @@ class Pseudo_MAGDataset(object):
         # print("Loading surface embedding ...")
         # bert_embeddings = KeyedVectors.load_word2vec_format(input_feature_name)
         # print(f"Finish loading bert embedding of size {bert_embeddings.vectors.shape}")
-        
+
         # assert bert_embeddings.vectors.shape == embeddings.vectors.shape
 
         # load train/validation/test partition files if needed
@@ -225,8 +227,8 @@ class Pseudo_MAGDataset(object):
             raw_validation_node_list = self._load_node_list(validation_node_file_name)
             raw_test_node_list = self._load_node_list(test_file_name)
         # generate vocab, tx_id is the old taxon_id read from {self.name}.terms file, node_id is the new taxon_id from 0 to len(vocab)
-        tx_id2node_id = {node.tx_id:idx for idx, node in enumerate(taxonomy.nodes()) }
-        node_id2tx_id = {v:k for k, v in tx_id2node_id.items()}
+        tx_id2node_id = {node.tx_id: idx for idx, node in enumerate(taxonomy.nodes())}
+        node_id2tx_id = {v: k for k, v in tx_id2node_id.items()}
         self.vocab = [tx_id2taxon[node_id2tx_id[node_id]].norm_name + "@@@" + str(node_id) for node_id in node_id2tx_id]
 
         # generate dgl.DGLGraph()
@@ -238,17 +240,17 @@ class Pseudo_MAGDataset(object):
 
         # node_features = np.zeros(embeddings.vectors.shape)
         # for node_id, tx_id in node_id2tx_id.items():
-            # node_features[node_id, :] = embeddings[tx_id]
+        # node_features[node_id, :] = embeddings[tx_id]
         # node_features = torch.FloatTensor(node_features)
 
         # input_features = np.zeros(bert_embeddings.vectors.shape)
         # for node_id, tx_id in node_id2tx_id.items():
-            # input_features[node_id, :] = bert_embeddings[tx_id]
+        # input_features[node_id, :] = bert_embeddings[tx_id]
         # input_features = torch.FloatTensor(input_features)
-        node_features = torch.zeros((len(node_id2tx_id),300))
-        input_features = torch.zeros((len(node_id2tx_id),300))
+        node_features = torch.zeros((len(node_id2tx_id), 300))
+        input_features = torch.zeros((len(node_id2tx_id), 300))
         # input_features = None
-        self.g_full.add_nodes(len(node_id2tx_id), {'x': node_features, 'y':input_features})
+        self.g_full.add_nodes(len(node_id2tx_id), {'x': node_features, 'y': input_features})
         self.g_full.add_edges([e[0] for e in edges], [e[1] for e in edges])
         # generate validation/test node_indices using either existing partitions or randomly sampled partition
         if self.existing_partition:
@@ -268,8 +270,9 @@ class Pseudo_MAGDataset(object):
                 validation_size = min(int(len(leaf_node_ids) * 0.1), MAX_VALIDATION_SIZE)
                 test_size = min(int(len(leaf_node_ids) * 0.1), MAX_TEST_SIZE)
                 self.validation_node_ids = leaf_node_ids[:validation_size]
-                self.test_node_ids = leaf_node_ids[validation_size:(validation_size+test_size)]
-                self.train_node_ids = [node_id for node_id in node_id2tx_id if node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
+                self.test_node_ids = leaf_node_ids[validation_size:(validation_size + test_size)]
+                self.train_node_ids = [node_id for node_id in node_id2tx_id if
+                                       node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
             elif self.partition_pattern == 'internal':
                 root_node = [node for node in taxonomy.nodes() if taxonomy.in_degree(node) == 0]
                 sampled_node_ids = [tx_id2node_id[node.tx_id] for node in taxonomy.nodes() if node not in root_node]
@@ -279,8 +282,9 @@ class Pseudo_MAGDataset(object):
                 validation_size = min(int(len(sampled_node_ids) * 0.1), MAX_VALIDATION_SIZE)
                 test_size = min(int(len(sampled_node_ids) * 0.1), MAX_TEST_SIZE)
                 self.validation_node_ids = sampled_node_ids[:validation_size]
-                self.test_node_ids = sampled_node_ids[validation_size:(validation_size+test_size)]
-                self.train_node_ids = [node_id for node_id in node_id2tx_id if node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
+                self.test_node_ids = sampled_node_ids[validation_size:(validation_size + test_size)]
+                self.train_node_ids = [node_id for node_id in node_id2tx_id if
+                                       node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
             else:
                 raise ValueError('Unknown partition method!')
             print("Finish partition graph ...")
@@ -358,8 +362,10 @@ class Pseudo_MAGDataset(object):
                         subgraph.remove_edge(node, s)
         return subgraph
 
+
 class MAGDataset(object):
-    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=False, partition_pattern='internal', shortest_path=False):
+    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=False, partition_pattern='internal',
+                 shortest_path=False):
         """ Raw dataset class for MAG dataset
 
         Parameters
@@ -455,14 +461,14 @@ class MAGDataset(object):
 
         # load embedding features
         print("Loading embedding ...")
-        print (embedding_file_name)
+        print(embedding_file_name)
         print(input_feature_name)
         embeddings = KeyedVectors.load_word2vec_format(embedding_file_name)
         print(f"Finish loading embedding of size {embeddings.vectors.shape}")
         print("Loading surface embedding ...")
         bert_embeddings = KeyedVectors.load_word2vec_format(input_feature_name)
         print(f"Finish loading bert embedding of size {bert_embeddings.vectors.shape}")
-        
+
         assert bert_embeddings.vectors.shape == embeddings.vectors.shape
 
         # load train/validation/test partition files if needed
@@ -472,8 +478,8 @@ class MAGDataset(object):
             raw_validation_node_list = self._load_node_list(validation_node_file_name)
             raw_test_node_list = self._load_node_list(test_file_name)
         # generate vocab, tx_id is the old taxon_id read from {self.name}.terms file, node_id is the new taxon_id from 0 to len(vocab)
-        tx_id2node_id = {node.tx_id:idx for idx, node in enumerate(taxonomy.nodes()) }
-        node_id2tx_id = {v:k for k, v in tx_id2node_id.items()}
+        tx_id2node_id = {node.tx_id: idx for idx, node in enumerate(taxonomy.nodes())}
+        node_id2tx_id = {v: k for k, v in tx_id2node_id.items()}
         self.vocab = [tx_id2taxon[node_id2tx_id[node_id]].norm_name + "@@@" + str(node_id) for node_id in node_id2tx_id]
 
         # generate dgl.DGLGraph()
@@ -493,7 +499,7 @@ class MAGDataset(object):
             input_features[node_id, :] = bert_embeddings[tx_id]
         input_features = torch.FloatTensor(input_features)
 
-        self.g_full.add_nodes(len(node_id2tx_id), {'x': node_features, 'y':input_features})
+        self.g_full.add_nodes(len(node_id2tx_id), {'x': node_features, 'y': input_features})
         self.g_full.add_edges([e[0] for e in edges], [e[1] for e in edges])
         # generate validation/test node_indices using either existing partitions or randomly sampled partition
         if self.existing_partition:
@@ -513,8 +519,9 @@ class MAGDataset(object):
                 validation_size = min(int(len(leaf_node_ids) * 0.1), MAX_VALIDATION_SIZE)
                 test_size = min(int(len(leaf_node_ids) * 0.1), MAX_TEST_SIZE)
                 self.validation_node_ids = leaf_node_ids[:validation_size]
-                self.test_node_ids = leaf_node_ids[validation_size:(validation_size+test_size)]
-                self.train_node_ids = [node_id for node_id in node_id2tx_id if node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
+                self.test_node_ids = leaf_node_ids[validation_size:(validation_size + test_size)]
+                self.train_node_ids = [node_id for node_id in node_id2tx_id if
+                                       node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
             elif self.partition_pattern == 'internal':
                 root_node = [node for node in taxonomy.nodes() if taxonomy.in_degree(node) == 0]
                 sampled_node_ids = [tx_id2node_id[node.tx_id] for node in taxonomy.nodes() if node not in root_node]
@@ -524,8 +531,9 @@ class MAGDataset(object):
                 validation_size = min(int(len(sampled_node_ids) * 0.1), MAX_VALIDATION_SIZE)
                 test_size = min(int(len(sampled_node_ids) * 0.1), MAX_TEST_SIZE)
                 self.validation_node_ids = sampled_node_ids[:validation_size]
-                self.test_node_ids = sampled_node_ids[validation_size:(validation_size+test_size)]
-                self.train_node_ids = [node_id for node_id in node_id2tx_id if node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
+                self.test_node_ids = sampled_node_ids[validation_size:(validation_size + test_size)]
+                self.train_node_ids = [node_id for node_id in node_id2tx_id if
+                                       node_id not in self.validation_node_ids and node_id not in self.test_node_ids]
             else:
                 raise ValueError('Unknown partition method!')
             print("Finish partition graph ...")
@@ -650,7 +658,7 @@ class RawDataset(Dataset):
                 self.core_subgraph.add_edge(node, self.pseudo_leaf_node)
             self.leaf_nodes = [node for node in self.core_subgraph.nodes() if self.core_subgraph.out_degree(node) == 1]
             # for pseudo leaf node
-            leaf_vector = torch.zeros((1, self.node_features.size(1))) # zero vector works best
+            leaf_vector = torch.zeros((1, self.node_features.size(1)))  # zero vector works best
             self.node_features = torch.cat((self.node_features, leaf_vector), 0)
             self.input_features = torch.cat((self.input_features, leaf_vector), 0)
             if self.normalize_embed:
@@ -664,24 +672,27 @@ class RawDataset(Dataset):
 
             # build node2pos, node2nbs, node2edge
             self.node2pos, self.node2edge = {}, {}
-            self.node2parents, self.node2children, self.node2nbs = {}, defaultdict(set), {self.pseudo_leaf_node:[]}
+            self.node2parents, self.node2children, self.node2nbs = {}, defaultdict(set), {self.pseudo_leaf_node: []}
             for node in set(train_node_ids):
                 parents = set(self.core_subgraph.predecessors(node))
                 children = set(self.core_subgraph.successors(node))
                 if len(children) > 1:
                     children = [i for i in children if i != self.pseudo_leaf_node]
-                node_pos_edges = [(pre, suc) for pre in parents for suc in children if pre!=suc]
+                node_pos_edges = [(pre, suc) for pre in parents for suc in children if pre != suc]
                 if len(node_pos_edges) == 0:
                     node_pos_edges = [(pre, suc) for pre in parents for suc in children]
-                self.node2edge[node] = set(self.core_subgraph.in_edges(node)).union(set(self.core_subgraph.out_edges(node)))
+                self.node2edge[node] = set(self.core_subgraph.in_edges(node)).union(
+                    set(self.core_subgraph.out_edges(node)))
                 self.node2pos[node] = node_pos_edges
                 self.node2parents[node] = parents
                 self.node2children[node] = children
                 self.node2nbs[node] = parents.union(children)
-            self.node2nbs[self.root] = set([n for n in self.core_subgraph.successors(self.root) if n != self.pseudo_leaf_node])
+            self.node2nbs[self.root] = set(
+                [n for n in self.core_subgraph.successors(self.root) if n != self.pseudo_leaf_node])
 
             self.valid_node_list = graph_dataset.validation_node_ids
-            holdout_subgraph = self._get_holdout_subgraph(graph_dataset.train_node_ids + graph_dataset.validation_node_ids)
+            holdout_subgraph = self._get_holdout_subgraph(
+                graph_dataset.train_node_ids + graph_dataset.validation_node_ids)
             self.valid_node2pos = self._find_insert_posistion(graph_dataset.validation_node_ids, holdout_subgraph)
 
             self.test_node_list = graph_dataset.test_node_ids
@@ -723,17 +734,17 @@ class RawDataset(Dataset):
         return len(self.node_list)
 
     def _get_children_cache(self, u, k):
-        
+
         if self.children_cache_cnt[u] >= self.cache_refresh_time or u not in self.children_cache:
             self.children_cache_cnt[u] = 0
             children_list = list(self.node2children[u])
             children_list += children_list
             i = self.children_cache_idx[u]
             index = min(k, len(children_list))
-            self.children_cache[u] = children_list[i:i+index]
-            self.children_cache_idx[u] = (i+index)%len(self.node2children[u])
+            self.children_cache[u] = children_list[i:i + index]
+            self.children_cache_idx[u] = (i + index) % len(self.node2children[u])
         children = self.children_cache[u]
-        self.children_cache_cnt[u]+=1
+        self.children_cache_cnt[u] += 1
         return children
 
     def __getitem__(self, idx):
@@ -840,7 +851,7 @@ class RawDataset(Dataset):
                     cs += list(holdout_graph.successors(c))
             if not children:
                 children.add(self.pseudo_leaf_node)
-            position = [(p, c) for p in parents for c in children if p!=c]
+            position = [(p, c) for p in parents for c in children if p != c]
             node2pos[node] = position
         return node2pos
 
@@ -877,7 +888,8 @@ class RawDataset(Dataset):
         while len(negatives) != negative_size:
             n_lack = negative_size - len(negatives)
             negatives.extend([ele for ele in self.all_edges[self.pointer: self.pointer + n_lack] if
-                                  ele not in self.node2pos[query_node] and ele not in self.node2edge[query_node] and ele not in ignore])
+                              ele not in self.node2pos[query_node] and ele not in self.node2edge[
+                                  query_node] and ele not in ignore])
             self.pointer += n_lack
             if self.pointer >= len(self.all_edges):
                 self.pointer = 0
@@ -904,17 +916,17 @@ class GraphDataset(RawDataset):
         self.cache[self.pseudo_leaf_node] = lg
 
     def _get_children_cache(self, u, k):
-        
+
         if self.children_cache_cnt[u] >= self.cache_refresh_time or u not in self.children_cache:
             self.children_cache_cnt[u] = 0
             children_list = list(self.node2children[u])
             children_list += children_list
             i = self.children_cache_idx[u]
             index = min(k, len(children_list))
-            self.children_cache[u] = children_list[i:i+index]
-            self.children_cache_idx[u] = (i+index)%len(self.node2children[u])
+            self.children_cache[u] = children_list[i:i + index]
+            self.children_cache_idx[u] = (i + index) % len(self.node2children[u])
         children = self.children_cache[u]
-        self.children_cache_cnt[u]+=1
+        self.children_cache_cnt[u] += 1
         return children
 
     def __getitem__(self, idx):
@@ -953,7 +965,7 @@ class GraphDataset(RawDataset):
             u_flag = int(u in self.node2parents[query_node])
             v_flag = int(v in self.node2children[query_node])
             e_flag = int(self.edge2dist[(u, v)] <= 2)
-            
+
             res.append([u, v, sibling, u_egonet, sibling, v_egonet, query_node, (0, u_flag, v_flag, e_flag, 0)])
 
         return tuple(res)
@@ -975,7 +987,8 @@ class GraphDataset(RawDataset):
             g_u = self.cache[anchor_node_u]
         else:
             u_cache_flag = self._check_cache_flag(anchor_node_u)
-            u_flag = ((query_node < 0) or (anchor_node_u not in self.node2nbs[query_node])) and (anchor_node_u not in self.node2nbs[anchor_node_v])
+            u_flag = ((query_node < 0) or (anchor_node_u not in self.node2nbs[query_node])) and (
+                        anchor_node_u not in self.node2nbs[anchor_node_v])
             if u_flag and u_cache_flag:
                 g_u = self.cache[anchor_node_u]
                 self.cache_counter[anchor_node_u] += 1
@@ -989,7 +1002,8 @@ class GraphDataset(RawDataset):
             g_v = self.cache[anchor_node_v]
         else:
             v_cache_flag = self._check_cache_flag(anchor_node_v)
-            v_flag = ((query_node < 0) or (anchor_node_v not in self.node2nbs[query_node])) and (anchor_node_v not in self.node2nbs[anchor_node_u])
+            v_flag = ((query_node < 0) or (anchor_node_v not in self.node2nbs[query_node])) and (
+                        anchor_node_v not in self.node2nbs[anchor_node_u])
             if v_flag and v_cache_flag:
                 g_v = self.cache[anchor_node_v]
                 self.cache_counter[anchor_node_v] += 1
@@ -1029,14 +1043,16 @@ class GraphDataset(RawDataset):
                     siblings = [n for n in self.core_subgraph.successors(anchor_node) if n != self.pseudo_leaf_node]
                 else:
                     siblings = [n for n in
-                                random.choices(list(self.core_subgraph.successors(anchor_node)), k=self.expand_factor) if
+                                random.choices(list(self.core_subgraph.successors(anchor_node)), k=self.expand_factor)
+                                if
                                 n != self.pseudo_leaf_node]
                 nodes.extend(siblings)
                 nodes_pos.extend([2] * len(siblings))
         else:  # remove query_node from the children set of anchor_node
             # TODO maybe include query node's neighbor
             if anchor_node == self.pseudo_leaf_node:
-                nodes = [n for n in random.choices(self.leaf_nodes, k=self.expand_factor) if n!=query_node and n!=other_anchor_node]
+                nodes = [n for n in random.choices(self.leaf_nodes, k=self.expand_factor) if
+                         n != query_node and n != other_anchor_node]
                 nodes_pos = [0] * len(nodes)
                 # anchor node itself
                 parent_node_idx = len(nodes)
@@ -1047,7 +1063,8 @@ class GraphDataset(RawDataset):
                 # nodes_pos = [1]
             # parents of anchor node
             else:
-                nodes = [n for n in self.core_subgraph.predecessors(anchor_node) if n != query_node and n!=other_anchor_node]
+                nodes = [n for n in self.core_subgraph.predecessors(anchor_node) if
+                         n != query_node and n != other_anchor_node]
                 nodes_pos = [0] * len(nodes)
                 # anchor node itself
                 parent_node_idx = len(nodes)
@@ -1056,11 +1073,12 @@ class GraphDataset(RawDataset):
                 # siblings of query node (i.e., children of anchor node)
                 if self.core_subgraph.out_degree(anchor_node) <= self.expand_factor:
                     siblings = [n for n in self.core_subgraph.successors(anchor_node) if
-                                n != self.pseudo_leaf_node and n != query_node and n!=other_anchor_node]
+                                n != self.pseudo_leaf_node and n != query_node and n != other_anchor_node]
                 else:
                     siblings = [n for n in
-                                random.choices(list(self.core_subgraph.successors(anchor_node)), k=self.expand_factor) if
-                                n != self.pseudo_leaf_node and n != query_node and n!=other_anchor_node]
+                                random.choices(list(self.core_subgraph.successors(anchor_node)), k=self.expand_factor)
+                                if
+                                n != self.pseudo_leaf_node and n != query_node and n != other_anchor_node]
                 nodes.extend(siblings)
                 nodes_pos.extend([2] * len(siblings))
 
@@ -1080,22 +1098,22 @@ class PathDataset(RawDataset):
     def __init__(self, graph_dataset, mode="train", sampling_mode=1, negative_size=32, max_pos_size=100,
                  expand_factor=64, cache_refresh_time=128, normalize_embed=False, test_topk=-1, num_sib=5):
         super(PathDataset, self).__init__(graph_dataset, mode, sampling_mode, negative_size, max_pos_size,
-                                           expand_factor, cache_refresh_time, normalize_embed, test_topk, num_sib)
+                                          expand_factor, cache_refresh_time, normalize_embed, test_topk, num_sib)
         self.node2root_path = self._get_path_to_root()
         self.node2leaf_path = self._get_path_to_leaf()
 
     def _get_children_cache(self, u, k):
-        
+
         if self.children_cache_cnt[u] >= self.cache_refresh_time or u not in self.children_cache:
             self.children_cache_cnt[u] = 0
             children_list = list(self.node2children[u])
             children_list += children_list
             i = self.children_cache_idx[u]
             index = min(k, len(children_list))
-            self.children_cache[u] = children_list[i:i+index]
-            self.children_cache_idx[u] = (i+index)%len(self.node2children[u])
+            self.children_cache[u] = children_list[i:i + index]
+            self.children_cache_idx[u] = (i + index) % len(self.node2children[u])
         children = self.children_cache[u]
-        self.children_cache_cnt[u]+=1
+        self.children_cache_cnt[u] += 1
         return children
 
     def __getitem__(self, idx):
@@ -1133,14 +1151,14 @@ class PathDataset(RawDataset):
             u_flag = int(u in self.node2parents[query_node])
             v_flag = int(v in self.node2children[query_node])
             e_flag = int(self.edge2dist[(u, v)] <= 2)
-            
+
             u_path, v_path, sibling, lens, sib_len = self._get_edge_node_path(query_node, (u, v))
             res.append([u, v, sibling, u_path, v_path, lens, query_node, (0, u_flag, v_flag, e_flag, 0)])
 
         return tuple(res)
 
     def _get_path_to_root(self):
-        node2root_path = {n:[] for n in self.node_list}
+        node2root_path = {n: [] for n in self.node_list}
         q = deque([self.root])
         node2root_path[self.root] = [[self.root]]
         visit = []
@@ -1157,12 +1175,12 @@ class PathDataset(RawDataset):
                 if c not in q:
                     q.append(c)
                 for path in node2root_path[i]:
-                    node2root_path[c].append([c]+path)
+                    node2root_path[c].append([c] + path)
         return node2root_path
 
     def _get_path_to_leaf(self):
-        leafs = [n for n in self.core_subgraph.nodes if self.core_subgraph.out_degree(n)==1]
-        node2leaf_path = {n:[] for n in self.node_list}
+        leafs = [n for n in self.core_subgraph.nodes if self.core_subgraph.out_degree(n) == 1]
+        node2leaf_path = {n: [] for n in self.node_list}
         q = deque(leafs)
         for n in leafs:
             node2leaf_path[n] = [[n, self.pseudo_leaf_node]]
@@ -1180,18 +1198,18 @@ class PathDataset(RawDataset):
                 if p not in q:
                     q.append(p)
                 for path in node2leaf_path[i]:
-                    node2leaf_path[p].append([p]+path)
+                    node2leaf_path[p].append([p] + path)
         return node2leaf_path
 
     def _get_edge_node_path(self, query_node, edge):
         sibling = self._get_children_cache(edge[0], self.num_sib)
         pu = random.choice(self.node2root_path[edge[0]])
-        pu = [n for n in pu if n!=query_node]
+        pu = [n for n in pu if n != query_node]
         if edge[1] == self.pseudo_leaf_node:
             pv = [self.pseudo_leaf_node]
         else:
             pv = random.choice(self.node2leaf_path[edge[1]])
-            pv = [n for n in pv if n!=query_node]
+            pv = [n for n in pv if n != query_node]
         len_pu = len(pu)
         len_pv = len(pv)
         sib_len = len(sibling)
@@ -1201,8 +1219,8 @@ class PathDataset(RawDataset):
         bpu, bpv, bsib, lens, sib_len = zip(*[self._get_edge_node_path(None, edge) for edge in edges])
         lens = torch.tensor(lens)
         max_u, max_v = lens.max(dim=0)[0]
-        bpu = [p+[self.pseudo_leaf_node]*(max_u-len(p)) for p in bpu]
-        bpv = [p+[self.pseudo_leaf_node]*(max_v-len(p)) for p in bpv]
+        bpu = [p + [self.pseudo_leaf_node] * (max_u - len(p)) for p in bpu]
+        bpv = [p + [self.pseudo_leaf_node] * (max_v - len(p)) for p in bpv]
         bsib = [sib + [self.pseudo_leaf_node] * (self.num_sib - len(sib)) for sib in bsib]
         return torch.tensor(bpu), torch.tensor(bpv), torch.tensor(bsib), lens, torch.tensor(sib_len)
 
@@ -1211,20 +1229,20 @@ class GraphPathDataset(GraphDataset, PathDataset):
     def __init__(self, graph_dataset, mode="train", sampling_mode=1, negative_size=32, max_pos_size=100,
                  expand_factor=64, cache_refresh_time=128, normalize_embed=False, test_topk=-1, num_sib=5):
         super(GraphPathDataset, self).__init__(graph_dataset, mode, sampling_mode, negative_size, max_pos_size,
-                                          expand_factor, cache_refresh_time, normalize_embed, test_topk, num_sib)
+                                               expand_factor, cache_refresh_time, normalize_embed, test_topk, num_sib)
 
     def _get_children_cache(self, u, k):
-        
+
         if self.children_cache_cnt[u] >= self.cache_refresh_time or u not in self.children_cache:
             self.children_cache_cnt[u] = 0
             children_list = list(self.node2children[u])
             children_list += children_list
             i = self.children_cache_idx[u]
             index = min(k, len(children_list))
-            self.children_cache[u] = children_list[i:i+index]
-            self.children_cache_idx[u] = (i+index)%len(self.node2children[u])
+            self.children_cache[u] = children_list[i:i + index]
+            self.children_cache_idx[u] = (i + index) % len(self.node2children[u])
         children = self.children_cache[u]
-        self.children_cache_cnt[u]+=1
+        self.children_cache_cnt[u] += 1
         return children
 
     def __getitem__(self, idx):
@@ -1257,12 +1275,14 @@ class GraphPathDataset(GraphDataset, PathDataset):
             u_flag = int(u in self.node2parents[query_node])
             v_flag = int(v in self.node2children[query_node])
             e_flag = int(self.edge2dist[(u, v)] <= 2)
-            res.append([u, v, sibling, u_egonet, v_egonet, u_path, v_path, lens, query_node, (0, u_flag, v_flag, e_flag, 0)])
+            res.append(
+                [u, v, sibling, u_egonet, v_egonet, u_path, v_path, lens, query_node, (0, u_flag, v_flag, e_flag, 0)])
         return tuple(res)
 
 
 class ExpanDataset(GraphPathDataset):
-    def __init__(self, graph_dataset, mode="train", sampling_mode=1, negative_size=32, max_pos_size=100, expand_factor=64, cache_refresh_time=128, normalize_embed=False, test_topk=-1):
+    def __init__(self, graph_dataset, mode="train", sampling_mode=1, negative_size=32, max_pos_size=100,
+                 expand_factor=64, cache_refresh_time=128, normalize_embed=False, test_topk=-1):
         start = time.time()
         self.mode = mode
         self.sampling_mode = sampling_mode
@@ -1322,13 +1342,15 @@ class ExpanDataset(GraphPathDataset):
 
         holdout_subgraph = self._get_holdout_subgraph(graph_dataset.train_node_ids + graph_dataset.validation_node_ids)
         valid_node2pos = self._find_insert_posistion(graph_dataset.validation_node_ids, holdout_subgraph)
-        self.valid_node2pos = {node: set([p for (p, c) in pos_l if c == self.pseudo_leaf_node]) for node, pos_l in valid_node2pos.items()}
+        self.valid_node2pos = {node: set([p for (p, c) in pos_l if c == self.pseudo_leaf_node]) for node, pos_l in
+                               valid_node2pos.items()}
         self.valid_node2parents = {node: set([p for (p, c) in pos_l]) for node, pos_l in valid_node2pos.items()}
         self.valid_node_list = [node for node, pos in self.valid_node2pos.items() if len(pos)]
 
         holdout_subgraph = self._get_holdout_subgraph(graph_dataset.train_node_ids + graph_dataset.test_node_ids)
         test_node2pos = self._find_insert_posistion(graph_dataset.test_node_ids, holdout_subgraph)
-        self.test_node2pos = {node: set([p for (p, c) in pos_l if c == self.pseudo_leaf_node]) for node, pos_l in test_node2pos.items()}
+        self.test_node2pos = {node: set([p for (p, c) in pos_l if c == self.pseudo_leaf_node]) for node, pos_l in
+                              test_node2pos.items()}
         self.test_node2parent = {node: set([p for (p, c) in pos_l]) for node, pos_l in test_node2pos.items()}
         self.test_node_list = [node for node, pos in self.test_node2pos.items() if len(pos)]
         self.test_node2sibling = {}
@@ -1419,7 +1441,8 @@ class ExpanDataset(GraphPathDataset):
         negatives = []
         while len(negatives) != negative_size:
             n_lack = negative_size - len(negatives)
-            negatives.extend([ele for ele in self.all_nodes[self.pointer: self.pointer + n_lack] if ele not in self.node2pos[query_node] and ele not in ignore])
+            negatives.extend([ele for ele in self.all_nodes[self.pointer: self.pointer + n_lack] if
+                              ele not in self.node2pos[query_node] and ele not in ignore])
             self.pointer += n_lack
             if self.pointer >= len(self.all_nodes):
                 self.pointer = 0
@@ -1530,7 +1553,7 @@ class ExpanDataset(GraphPathDataset):
             pu = [self.pseudo_leaf_node]
         else:
             pu = random.choice(self.node2root_path[parent])
-            pu = [n for n in pu if n!=query_node]
+            pu = [n for n in pu if n != query_node]
         len_pu = len(pu)
         return pu, len_pu
 
@@ -1538,5 +1561,5 @@ class ExpanDataset(GraphPathDataset):
         bpu, lens = zip(*[self._get_edge_node_path(None, edge) for edge in edges])
         lens = torch.tensor(lens)
         max_u = lens.max(dim=0)[0]
-        bpu = [p+[self.pseudo_leaf_node]*(max_u-len(p)) for p in bpu]
+        bpu = [p + [self.pseudo_leaf_node] * (max_u - len(p)) for p in bpu]
         return torch.tensor(bpu), lens
