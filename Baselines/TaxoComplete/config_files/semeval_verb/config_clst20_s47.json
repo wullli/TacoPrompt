@@ -2,7 +2,7 @@
     "batch_size" : 32,
     "epochs" : 10,
 	"sampling" : "closest",
-    "saving_path" : "./data/semeval_verb/results/",
+    "saving_path" : "./data/semeval_verb/taxocomplete/",
     "name" : "semeval_verb",
     "data_path" : "./data/semeval_verb/",
     "model_name" : "/codes/l/Modules/multi-qa-distilbert-cos-v1",

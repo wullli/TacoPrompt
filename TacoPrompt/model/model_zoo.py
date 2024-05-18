@@ -933,10 +933,10 @@ class PolyScorer(nn.Module):
         #     print('in scorer: ', pq_parental, qw_sibling)
         # s = time.time()
         placeholder_expanded = self.placeholder.expand(pq_parental.shape[0], -1)
-        pe_expanded = pe.unsqueeze(1).complete(-1, pq_parental.shape[1])
-        ce_expanded = ce.unsqueeze(1).complete(-1, qc_parental.shape[1])
-        be_expanded = be.unsqueeze(1).complete(-1, qc_parental.shape[1])
-        we_expanded = we.unsqueeze(1).complete(-1, qc_parental.shape[1])
+        pe_expanded = pe.unsqueeze(1).expand(-1, pq_parental.shape[1])
+        ce_expanded = ce.unsqueeze(1).expand(-1, qc_parental.shape[1])
+        be_expanded = be.unsqueeze(1).expand(-1, qc_parental.shape[1])
+        we_expanded = we.unsqueeze(1).expand(-1, qc_parental.shape[1])
 
         # bs * dim
         # s = time.time()

@@ -65,7 +65,7 @@
         "epochs": 500,
         "test_batch_size": 4096,
 
-        "save_dir": "data/saved/Verb/",
+        "save_dir": "data/saved/semeval_verb/",
         "save_period": 20,
         "verbosity": 2,
         

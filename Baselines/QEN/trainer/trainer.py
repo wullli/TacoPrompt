@@ -189,7 +189,7 @@ class TrainerS(Trainer):
                 batched_energy_scores = []
                 nf = node_features[query, :].to(self.device)
                 for (ur, vr), n_position in zip(batched_model, batched_positions):
-                    expanded_nf = nf.complete(n_position, -1)
+                    expanded_nf = nf.expand(n_position, -1)
                     ur = ur.to(self.device)
                     vr = vr.to(self.device)
                     energy_scores = model.match(ur, vr, expanded_nf)
@@ -530,7 +530,7 @@ class TrainerTC(Trainer):
                         # if debug:
                         #     print(f'widx: {w_idx}')
                         #     print(pt, wt)
-                        qt = query_code.complete(pt.shape[0], -1, -1)
+                        qt = query_code.expand(pt.shape[0], -1, -1)
 
                         scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
                     if debug:
@@ -685,7 +685,7 @@ class TrainerTExpan(Trainer):
                 batched_energy_scores = []
                 nf = node_features[query, :].to(self.device)
                 for (ur, vr), n_position in zip(batched_model, batched_positions):
-                    expanded_nf = nf.complete(n_position, -1)
+                    expanded_nf = nf.expand(n_position, -1)
                     ur = ur.to(self.device)
                     vr = vr.to(self.device)
                     energy_scores = model.match(ur, vr, expanded_nf)
@@ -812,7 +812,7 @@ class TrainerExpan(Trainer):
                 batched_energy_scores = []
                 nf = node_features[query, :].to(self.device)
                 for ur, n_position in zip(batched_model, batched_positions):
-                    expanded_nf = nf.complete(n_position, -1)
+                    expanded_nf = nf.expand(n_position, -1)
                     ur = ur.to(self.device)
                     energy_scores = model.match(ur, expanded_nf)
                     batched_energy_scores.append(energy_scores)

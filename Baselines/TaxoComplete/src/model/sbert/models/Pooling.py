@@ -91,17 +91,17 @@ class Pooling(nn.Module):
             cls_token = features.get('cls_token_embeddings', token_embeddings[:, 0])  # Take first token by default
             output_vectors.append(cls_token)
         if self.pooling_mode_max_tokens:
-            input_mask_expanded = attention_mask.unsqueeze(-1).complete(token_embeddings.size()).float()
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
             token_embeddings[input_mask_expanded == 0] = -1e9  # Set padding tokens to large negative value
             max_over_time = torch.max(token_embeddings, 1)[0]
             output_vectors.append(max_over_time)
         if self.pooling_mode_mean_tokens or self.pooling_mode_mean_sqrt_len_tokens:
-            input_mask_expanded = attention_mask.unsqueeze(-1).complete(token_embeddings.size()).float()
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
             sum_embeddings = torch.sum(token_embeddings * input_mask_expanded, 1)
 
             #If tokens are weighted (by WordWeights layer), feature 'token_weights_sum' will be present
             if 'token_weights_sum' in features:
-                sum_mask = features['token_weights_sum'].unsqueeze(-1).complete(sum_embeddings.size())
+                sum_mask = features['token_weights_sum'].unsqueeze(-1).expand(sum_embeddings.size())
             else:
                 sum_mask = input_mask_expanded.sum(1)
 
@@ -112,13 +112,13 @@ class Pooling(nn.Module):
             if self.pooling_mode_mean_sqrt_len_tokens:
                 output_vectors.append(sum_embeddings / torch.sqrt(sum_mask))
         if self.pooling_mode_weightedmean_tokens:
-            input_mask_expanded = attention_mask.unsqueeze(-1).complete(token_embeddings.size()).float()
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
             # token_embeddings shape: bs, seq, hidden_dim
             weights = (
                     torch.arange(start=1, end=token_embeddings.shape[1] + 1)
                     .unsqueeze(0)
                     .unsqueeze(-1)
-                    .complete(token_embeddings.size())
+                    .expand(token_embeddings.size())
                     .float().to(token_embeddings.device)
                 )
             assert weights.shape == token_embeddings.shape == input_mask_expanded.shape
@@ -128,7 +128,7 @@ class Pooling(nn.Module):
 
             #If tokens are weighted (by WordWeights layer), feature 'token_weights_sum' will be present
             if 'token_weights_sum' in features:
-                sum_mask = features['token_weights_sum'].unsqueeze(-1).complete(sum_embeddings.size())
+                sum_mask = features['token_weights_sum'].unsqueeze(-1).expand(sum_embeddings.size())
             else:
                 sum_mask = input_mask_expanded.sum(1)
 
@@ -153,7 +153,7 @@ class Pooling(nn.Module):
             # Actually no need for the attention mask as we gather the last token where attn_mask = 1
             # but as we set some indices (which shouldn't be attended to) to 0 with clamp, we
             # use the attention mask to ignore them again
-            input_mask_expanded = attention_mask.unsqueeze(-1).complete(token_embeddings.size()).float()
+            input_mask_expanded = attention_mask.unsqueeze(-1).expand(token_embeddings.size()).float()
             embedding = torch.gather(token_embeddings * input_mask_expanded, 1, gather_indices).squeeze(dim=1)
             output_vectors.append(embedding)
 

@@ -127,7 +127,7 @@ def main(config, args_outer):
             batched_energy_scores = []
             nf = torch.tensor(kv[str(query)], dtype=torch.float32).to(device)
             for (ur, vr), n_position in zip(batched_model, batched_positions):
-                expanded_nf = nf.complete(n_position, -1)
+                expanded_nf = nf.expand(n_position, -1)
                 ur = ur.to(device)
                 vr = vr.to(device)
                 energy_scores = model.match(ur, vr, expanded_nf)

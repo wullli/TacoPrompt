@@ -78,7 +78,7 @@
         "epochs": 200,
         "test_batch_size": 4096,
 
-        "save_dir": "./experiments/wordnet_v/",
+        "save_dir": "./data/saved/semeval_verb/",
         "save_period": 20,
         "verbosity": 2,
         
