@@ -23,7 +23,7 @@ class UnifiedDataLoader(DataLoader):
         test_flag = 'test' if test else 'train'
 
         data_name = data_path.split('/')[-1]
-        raw_graph_dataset = MAGDataset(name=data_name, path=data_path, raw=True,partition_pattern='internal')
+        raw_graph_dataset = MAGDataset(name=data_name, path=data_path, raw=True, partition_pattern='internal')
         if 'g' in mode and 'p' in mode:
             msk_graph_dataset = GraphPathDataset(raw_graph_dataset, mode=test_flag,sampling_mode=sampling_mode,
                                                  negative_size=negative_size, max_pos_size=max_pos_size,

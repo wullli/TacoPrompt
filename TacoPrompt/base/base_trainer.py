@@ -77,7 +77,7 @@ class BaseTrainer:
         pass
 
     def test(self):
-        test_values, leaf_values, nonleaf_values = self._test('validation')
+        test_values, leaf_values, nonleaf_values = self._test('test')
         # test_values = self._test('test')
         for i, mtr in enumerate(self.metrics):
             self.logger.info('    {:15s}: {:.3f}'.format('test_' + mtr.__name__, test_values[i]))
@@ -94,10 +94,6 @@ class BaseTrainer:
         """
         Full training logic
         """
-        best_state = None
-        best_saved = None
-        epoch = 0
-        self._save_checkpoint(0, save_best=False)
         not_improved_count = 0
         for epoch in range(self.start_epoch, self.epochs + 1):
             result = self._train_epoch(epoch)

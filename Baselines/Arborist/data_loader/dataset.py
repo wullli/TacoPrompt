@@ -114,7 +114,7 @@ class Taxon(object):
 
 
 class MAGDataset(object):
-    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=False, partition_pattern='internal', shortest_path=True):
+    def __init__(self, name, path, embed_suffix="", raw=True, existing_partition=True, partition_pattern='internal', shortest_path=True):
         """ Raw dataset class for MAG dataset
 
         Parameters

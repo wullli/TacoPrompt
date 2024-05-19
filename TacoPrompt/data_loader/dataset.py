@@ -17,11 +17,13 @@ MAX_VALIDATION_SIZE = 1000
 
 # nlp = spacy.load('en_core_web_md')
 
-#LIU
+# LIU
 import torch
 import numpy as np
 from torch_geometric.utils.undirected import to_undirected
 from torch_geometric.utils import remove_self_loops
+
+
 # def get_edges(edge_index_list):
 #     undirected_edge_list = []
 #     edge_index, _ = remove_self_loops(
@@ -38,7 +40,7 @@ def get_edges(edge_index_list):
     edge_index = torch.from_numpy(np.array(edge_index_list)).transpose(1, 0)
     # edge_index, _ = remove_self_loops(
     #     torch.from_numpy(np.array(edge_index_list)).transpose(1, 0))  # remove self-loop
-    undirected_edge_list.append(edge_index) # convert to undirected/bi-directed edge_index
+    undirected_edge_list.append(edge_index)  # convert to undirected/bi-directed edge_index
     return undirected_edge_list[0]
 
 
@@ -64,23 +66,17 @@ class Taxon(object):
         # self.nlp_description = nlp(description)
 
     def __str__(self):
-        return "Taxon {} (name: {}, level: {})".format(self.tx_id, self.norm_name, self.level)
+        return "Taxon {} (name: {}, level: {}, id:{})".format(self.tx_id, self.norm_name, self.level, self.tx_id)
 
     def __lt__(self, other):
         compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
         compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
-        if compare_val_self < compare_val_other:
-            return True
-        else:
-            return False
+        return compare_val_self < compare_val_other
 
     def __eq__(self, other):
         compare_val_self = self.tx_id if self.tx_id != "" else self.display_name
         compare_val_other = other.tx_id if other.tx_id != "" else other.display_name
-        if compare_val_self == compare_val_other:
-            return True
-        else:
-            return False
+        return compare_val_self == compare_val_other
 
     def __hash__(self):
         hash_val = self.tx_id if self.tx_id != "" else self.display_name
@@ -317,9 +313,11 @@ class RawDataset(Dataset):
 
             print('adding pseudo leaf')
             if graph_pickled:
+                print("Using pickled graph!")
                 self.core_subgraph = graphs['core_subgraph']
                 self.pseudo_leaf_node = graphs['pseudo_leaf_node']
             else:
+                print("Creating new graph!")
                 self.core_subgraph = self._get_holdout_subgraph(train_nodes)
                 print('holding out subgraph')
                 self.pseudo_leaf_node = Taxon(tx_id='', norm_name='', display_name='pseudo leaf')
@@ -365,7 +363,8 @@ class RawDataset(Dataset):
                 self.parent2paths = {}
                 for node in self.core_subgraph.nodes():
                     try:
-                        self.parent2paths[node] = list(nx.all_shortest_paths(self.core_subgraph, self.pseudo_root_node, node))[0]
+                        self.parent2paths[node] = \
+                        list(nx.all_shortest_paths(self.core_subgraph, self.pseudo_root_node, node))[0]
                     except:
                         print("None Path!")
                         self.parent2paths[node] = [node]
@@ -374,8 +373,8 @@ class RawDataset(Dataset):
                 with open(path_pickle_path, 'wb') as f:
                     pickle.dump({
                         'parent2paths': self.parent2paths
-                    }, 
-                    f, protocol=pickle.HIGHEST_PROTOCOL)
+                    },
+                        f, protocol=pickle.HIGHEST_PROTOCOL)
 
             # build node2pos, node2edge
             print('building node2pos, node2edge')
@@ -453,7 +452,7 @@ class RawDataset(Dataset):
                 for ele in eles:
                     self.node2pos_node[node][0].add(ele[0])
                     self.node2pos_node[node][1].add(ele[1])
-            
+
         end = time.time()
         print(f"Finish loading dataset ({end - start} seconds)")
 
@@ -703,5 +702,3 @@ class RawDataset(Dataset):
             negatives = negatives[:negative_size]
 
         return negatives
-
-
