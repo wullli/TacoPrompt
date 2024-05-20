@@ -18,7 +18,7 @@ class UnifiedDataLoader(DataLoader):
         self.shuffle = shuffle
         self.cache_refresh_time = cache_refresh_time
 
-        raw_graph_dataset = MAGDataset(name=taxonomy_name, path=data_path, raw=False, existing_partition=True)
+        raw_graph_dataset = MAGDataset(name=taxonomy_name, path=data_path, raw=True, existing_partition=True)
         #raw_graph_dataset = MAGDataset(name=taxonomy_name, path=data_path, raw=True, existing_partition=False)
         self.dataset = RawDataset(raw_graph_dataset, sampling_mode=sampling_mode,
                                   negative_size=negative_size, max_pos_size=max_pos_size, expand_factor=expand_factor,

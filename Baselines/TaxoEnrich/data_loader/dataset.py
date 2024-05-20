@@ -254,9 +254,9 @@ class Pseudo_MAGDataset(object):
         self.g_full.add_edges([e[0] for e in edges], [e[1] for e in edges])
         # generate validation/test node_indices using either existing partitions or randomly sampled partition
         if self.existing_partition:
-            self.train_node_ids = [tx_id2node_id[tx_id] for tx_id in raw_train_node_list]
-            self.validation_node_ids = [tx_id2node_id[tx_id] for tx_id in raw_validation_node_list]
-            self.test_node_ids = [tx_id2node_id[tx_id] for tx_id in raw_test_node_list]
+            self.train_node_ids = [tx_id2node_id[tx_ids[int(idx)]] for idx in raw_train_node_list]
+            self.validation_node_ids = [tx_id2node_id[tx_ids[int(idx)]] for idx in raw_validation_node_list]
+            self.test_node_ids = [tx_id2node_id[tx_ids[int(idx)]] for idx in raw_test_node_list]
         else:
             print("Partition graph ...")
             if self.partition_pattern == 'leaf':
