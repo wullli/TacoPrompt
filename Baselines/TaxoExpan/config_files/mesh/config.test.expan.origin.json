@@ -65,7 +65,7 @@
         "epochs": 500,
         "test_batch_size": 4096,
 
-        "save_dir": "data/saved/mesh/",
+        "save_dir": "data/saved/mesh/TaxoExpan",
         "save_period": 20,
         "verbosity": 2,
         

@@ -38,19 +38,25 @@
 
     "hit_metrics": [
         "mrr_scaled_10",
-        "real_hit_at_1",
-        "real_hit_at_5",
-        "real_hit_at_10"
+        "hit_at_1",
+        "hit_at_5",
+        "hit_at_10"
     ],
+
     "recall_metrics": [
         "mrr_scaled_10",
-        "Recall_at_1",
-        "Recall_at_5",
-        "Recall_at_10"
+        "recall_at_1",
+        "recall_at_5",
+        "recall_at_10"
     ],
+
     "metrics": [
         "macro_mr",
         "micro_mr",
+        "mrr_scaled_10",
+        "recall_at_1",
+        "recall_at_5",
+        "recall_at_10",
         "hit_at_1",
         "hit_at_5",
         "hit_at_10",
