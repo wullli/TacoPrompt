@@ -1,11 +1,11 @@
 {
-    "exp_name": "Mesh-",
-    "name": "TacoPromptHidden",
+    "exp_name": "wikitax-TEMP",
+    "name": "TEMP",
     "n_gpu": 1,
-    "data_path": "data/mesh/mesh.pickle.bin",
+    "data_path": "data/wikitax/wikitax.pickle.bin",
     "arch": {
-        "type": "TacoPromptHidden",
-        "trainer": "TrainerHidden",
+        "type": "TEMPCompletion",
+        "trainer": "TrainerTEMP",
         "args": {
             "dropout": 0.1,
             "plm": "bert-base-uncased"
@@ -15,9 +15,9 @@
         "type": "UnifiedDataLoader",
         "args": {
             "tokenizer": "bert-base-uncased",
-            "taxonomy_name": "mesh",
+            "taxonomy_name": "wikitax",
             "sampling_mode": 1,
-            "batch_size": 6,
+            "batch_size": 2,
             "negative_size": 15,
             "max_pos_size": 1,
             "expand_factor": 40,
@@ -34,7 +34,7 @@
             "amsgrad": true
         }
     },
-    "loss": "bce_loss",
+    "loss": "margin_rank_loss",
 
     "hit_metrics": [
         "mrr_scaled_10",
@@ -78,17 +78,17 @@
     "trainer": {
         "lm": 1.0,
         "lp": 1.0,
-        "lc": 0.3,
+        "lc": 1.0,
         "anneal": 1,
-        "epochs": 60,
+        "epochs": 100,
         "test_batch_size": 775,
-        "save_dir": "data/saved/mesh/",
+        "save_dir": "data/saved/wikitax/",
         "save_period": 20,
         "verbosity": 2,
         "monitor": "max val_mrr_scaled_10",
-        "early_stop": 2,
+        "early_stop": 3,
         "grad_clip": 1,
-        "accumulation_iters": 2,
+        "accumulation_iters": 8,
         "tensorboardX": true
     }
 }
