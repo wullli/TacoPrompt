@@ -902,12 +902,12 @@ class PolyScorer(nn.Module):
         pq_parental = self.positional_encoder(
             torch.cat((self.cls_p.expand(q_code.shape[0], 1, -1), p_code[:, 1:, ...],
                        q_code[:, 1:, ...]), dim=1))
-        pq_parental = self.parent_transformer(pq_parental.transpose(0, 1))[0, :, :].squeeze(0)
+        pq_parental = self.parent_transformer(pq_parental.transpose(0, 1))[0, :, :]
 
         qc_parental = self.positional_encoder(
             torch.cat((self.cls_p.expand(q_code.shape[0], 1, -1), q_code[:, 1:, ...],
                        c_code[:, 1:, ...]), dim=1))
-        qc_parental = self.parent_transformer(qc_parental.transpose(0, 1))[0, :, :].squeeze(0)
+        qc_parental = self.parent_transformer(qc_parental.transpose(0, 1))[0, :, :]
 
         # bs * dim
         # qb_sibling = self.positional_encoder(

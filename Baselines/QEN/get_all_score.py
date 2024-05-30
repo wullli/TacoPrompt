@@ -242,8 +242,20 @@ class Tester:
                             #     print(f'widx: {w_idx}')
                             #     print(pt, wt)
                             qt = query_code.expand(pt.shape[0], -1, -1)
-
-                            scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
+                            try:
+                                scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
+                            except IndexError as ie:
+                                print("\n")
+                                print("pe:", pe.shape)
+                                print("ce:", pe.shape)
+                                print("be:", pe.shape)
+                                print("we:", pe.shape)
+                                print("pt:", pe.shape)
+                                print("ct:", pe.shape)
+                                print("bt:", pe.shape)
+                                print("wt:", pe.shape)
+                                print("\n")
+                                raise ie
                         if debug:
                             print(scores.shape)
                             print(scores.squeeze())

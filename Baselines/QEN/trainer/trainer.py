@@ -532,7 +532,21 @@ class TrainerTC(Trainer):
                         #     print(pt, wt)
                         qt = query_code.expand(pt.shape[0], -1, -1)
 
-                        scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
+                        try:
+                            scores, _, _, _, _ = model.poly_scorer(qt, pt, ct, bt, wt, pe, ce, be, we, debug=debug)
+                        except Exception as e:
+                            print("\n")
+                            print("pe:", pe.shape)
+                            print("ce:", ce.shape)
+                            print("be:", be.shape)
+                            print("we:", we.shape)
+                            print("pt:", pt.shape)
+                            print("ct:", ct.shape)
+                            print("bt:", bt.shape)
+                            print("wt:", wt.shape)
+                            print("qt:", qt.shape)
+                            print("\n")
+                            raise e
                     if debug:
                         print(scores.shape)
                         print(scores.squeeze())
