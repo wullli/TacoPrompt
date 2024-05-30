@@ -196,12 +196,6 @@ class MAGDataset(object):
             self.train_node_ids = [int(n) for n in raw_train_node_list]
             self.validation_node_ids = [int(n) for n in raw_validation_node_list]
             self.test_node_ids = [int(n) for n in raw_test_node_list]
-
-            tx_ids = [taxon.tx_id for taxon in self.taxonomy.nodes()]
-            self.train_node_ids = [self.tx_id2node_id[tx_ids[int(idx)]] for idx in raw_train_node_list]
-            self.validation_node_ids = [self.tx_id2node_id[tx_ids[int(idx)]] for idx in raw_validation_node_list]
-            self.test_node_ids = [self.tx_id2node_id[tx_ids[int(idx)]] for idx in raw_test_node_list]
-
         else:
             print("Partition graph ...")
             if self.partition_pattern == 'leaf':
