@@ -75,7 +75,7 @@
         "lb": 0,
         "lw": 0,
         "anneal": 1,
-        "epochs": 1,
+        "epochs": 500,
         "test_batch_size": 32,
         "save_dir": "data/saved/wikitax/",
         "save_period": 20,
